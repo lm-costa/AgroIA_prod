@@ -1,0 +1,1090 @@
+{
+  "2.0": [
+    {
+      "Rank": 1,
+      "parameter": "DVSEND",
+      "mu_star": 4230612.366466667,
+      "sigma": 5665648.713839999
+    },
+    {
+      "Rank": 2,
+      "parameter": "AMAXTB200",
+      "mu_star": 2424064.91871,
+      "sigma": 3774207.05889
+    },
+    {
+      "Rank": 3,
+      "parameter": "TMPFTB020",
+      "mu_star": 2403858.404266667,
+      "sigma": 3769680.9477899997
+    },
+    {
+      "Rank": 4,
+      "parameter": "AMAXTB082",
+      "mu_star": 2019209.2352433333,
+      "sigma": 3943787.87977
+    },
+    {
+      "Rank": 5,
+      "parameter": "TSUM2",
+      "mu_star": 1722289.1293433334,
+      "sigma": 4019727.3460899997
+    },
+    {
+      "Rank": 6,
+      "parameter": "SPAN",
+      "mu_star": 1414385.1338966668,
+      "sigma": 2692284.8483433337
+    },
+    {
+      "Rank": 7,
+      "parameter": "TMPFTB035",
+      "mu_star": 1309273.3591766667,
+      "sigma": 2327703.2759033334
+    },
+    {
+      "Rank": 8,
+      "parameter": "TDWI",
+      "mu_star": 1271987.3751933335,
+      "sigma": 3443930.00323
+    },
+    {
+      "Rank": 9,
+      "parameter": "SLATB100",
+      "mu_star": 1254405.3891866666,
+      "sigma": 2435323.25485
+    },
+    {
+      "Rank": 10,
+      "parameter": "CVO",
+      "mu_star": 1116731.86858,
+      "sigma": 1992786.1719833335
+    },
+    {
+      "Rank": 11,
+      "parameter": "IDSL",
+      "mu_star": 981987.2507966666,
+      "sigma": 3277347.1683466667
+    },
+    {
+      "Rank": 12,
+      "parameter": "TSUM1",
+      "mu_star": 861991.63102,
+      "sigma": 2201299.579836667
+    },
+    {
+      "Rank": 13,
+      "parameter": "RFSETB200",
+      "mu_star": 693371.6991133334,
+      "sigma": 1315525.8928366667
+    },
+    {
+      "Rank": 14,
+      "parameter": "RMO",
+      "mu_star": 534287.92993,
+      "sigma": 1732426.8650166665
+    },
+    {
+      "Rank": 15,
+      "parameter": "TBASE",
+      "mu_star": 390138.2758033333,
+      "sigma": 1046591.8666966667
+    },
+    {
+      "Rank": 16,
+      "parameter": "RML",
+      "mu_star": 367763.40694666666,
+      "sigma": 663239.59753
+    },
+    {
+      "Rank": 17,
+      "parameter": "SLATB200",
+      "mu_star": 365178.42018333334,
+      "sigma": 884920.4564566667
+    },
+    {
+      "Rank": 18,
+      "parameter": "SLATB000",
+      "mu_star": 309072.2533833334,
+      "sigma": 707106.4836500001
+    },
+    {
+      "Rank": 19,
+      "parameter": "DLC",
+      "mu_star": 304149.08446,
+      "sigma": 1463451.4121566666
+    },
+    {
+      "Rank": 20,
+      "parameter": "SLATB064",
+      "mu_star": 279943.4683266666,
+      "sigma": 803193.15501
+    },
+    {
+      "Rank": 21,
+      "parameter": "RMS",
+      "mu_star": 268904.70654,
+      "sigma": 534377.4014133334
+    },
+    {
+      "Rank": 22,
+      "parameter": "SLATB029",
+      "mu_star": 250957.24290666668,
+      "sigma": 1471591.8728500002
+    },
+    {
+      "Rank": 23,
+      "parameter": "AMAXTB014",
+      "mu_star": 235647.93349999998,
+      "sigma": 657355.8987466667
+    },
+    {
+      "Rank": 24,
+      "parameter": "RFSETB000",
+      "mu_star": 173834.91051,
+      "sigma": 383902.11300666665
+    },
+    {
+      "Rank": 25,
+      "parameter": "DLO",
+      "mu_star": 171259.44528333333,
+      "sigma": 1122565.2129199998
+    },
+    {
+      "Rank": 26,
+      "parameter": "RMR",
+      "mu_star": 151892.83216666666,
+      "sigma": 376231.63283333334
+    },
+    {
+      "Rank": 27,
+      "parameter": "CVL",
+      "mu_star": 148453.22960333334,
+      "sigma": 318359.09869
+    },
+    {
+      "Rank": 28,
+      "parameter": "AMAXTB000",
+      "mu_star": 113186.16516333332,
+      "sigma": 657068.1529699999
+    },
+    {
+      "Rank": 29,
+      "parameter": "RRI",
+      "mu_star": 85680.88663666666,
+      "sigma": 360084.92332999996
+    },
+    {
+      "Rank": 30,
+      "parameter": "RGRLAI",
+      "mu_star": 81367.60936999999,
+      "sigma": 807457.8375733333
+    },
+    {
+      "Rank": 31,
+      "parameter": "TBASEM",
+      "mu_star": 80669.32461666666,
+      "sigma": 196353.08764666665
+    },
+    {
+      "Rank": 32,
+      "parameter": "Q10",
+      "mu_star": 60427.119763333336,
+      "sigma": 117119.76126333333
+    },
+    {
+      "Rank": 33,
+      "parameter": "SLATB021",
+      "mu_star": 57317.70414666667,
+      "sigma": 151061.36671
+    },
+    {
+      "Rank": 34,
+      "parameter": "CVS",
+      "mu_star": 55177.9868,
+      "sigma": 85215.61403666667
+    },
+    {
+      "Rank": 35,
+      "parameter": "RDI",
+      "mu_star": 50090.53735333333,
+      "sigma": 245221.58112666666
+    },
+    {
+      "Rank": 36,
+      "parameter": "TSUMEM",
+      "mu_star": 45334.42605,
+      "sigma": 106576.98368666667
+    },
+    {
+      "Rank": 37,
+      "parameter": "IAIRDU",
+      "mu_star": 45309.90386,
+      "sigma": 267200.74848333333
+    },
+    {
+      "Rank": 38,
+      "parameter": "TMPFTB008",
+      "mu_star": 43047.38536333333,
+      "sigma": 122866.33064333333
+    },
+    {
+      "Rank": 39,
+      "parameter": "CVR",
+      "mu_star": 30738.533829999997,
+      "sigma": 106003.56253333334
+    },
+    {
+      "Rank": 40,
+      "parameter": "CFET",
+      "mu_star": 27434.84521,
+      "sigma": 197712.56303666666
+    },
+    {
+      "Rank": 41,
+      "parameter": "RDMCR",
+      "mu_star": 25122.37186,
+      "sigma": 146002.44230666666
+    },
+    {
+      "Rank": 42,
+      "parameter": "IOX",
+      "mu_star": 17343.528186666666,
+      "sigma": 112582.60156333333
+    },
+    {
+      "Rank": 43,
+      "parameter": "DEPNR",
+      "mu_star": 17319.198323333334,
+      "sigma": 73158.07183666667
+    },
+    {
+      "Rank": 44,
+      "parameter": "TEFFMX",
+      "mu_star": 15091.537453333332,
+      "sigma": 47798.69375333333
+    },
+    {
+      "Rank": 45,
+      "parameter": "PERDL",
+      "mu_star": 11685.778103333334,
+      "sigma": 92952.55270666667
+    }
+  ],
+  "1.0": [
+    {
+      "Rank": 1,
+      "parameter": "DVSEND",
+      "mu_star": 3908569.15176,
+      "sigma": 5241546.984356667
+    },
+    {
+      "Rank": 2,
+      "parameter": "AMAXTB200",
+      "mu_star": 2420213.934166667,
+      "sigma": 3714841.74755
+    },
+    {
+      "Rank": 3,
+      "parameter": "AMAXTB082",
+      "mu_star": 2037775.9036666667,
+      "sigma": 3931219.97689
+    },
+    {
+      "Rank": 4,
+      "parameter": "TMPFTB020",
+      "mu_star": 2027724.0376633334,
+      "sigma": 3070973.95988
+    },
+    {
+      "Rank": 5,
+      "parameter": "TMPFTB035",
+      "mu_star": 1643290.7432333333,
+      "sigma": 2782490.6747966665
+    },
+    {
+      "Rank": 6,
+      "parameter": "TSUM2",
+      "mu_star": 1574515.7452466667,
+      "sigma": 3598565.26044
+    },
+    {
+      "Rank": 7,
+      "parameter": "SPAN",
+      "mu_star": 1380700.0045033332,
+      "sigma": 2602289.695756667
+    },
+    {
+      "Rank": 8,
+      "parameter": "SLATB100",
+      "mu_star": 1303704.4611933334,
+      "sigma": 2477692.421366667
+    },
+    {
+      "Rank": 9,
+      "parameter": "TDWI",
+      "mu_star": 1256105.6616166667,
+      "sigma": 3413103.2447733334
+    },
+    {
+      "Rank": 10,
+      "parameter": "CVO",
+      "mu_star": 1027359.9244,
+      "sigma": 1855585.6985666668
+    },
+    {
+      "Rank": 11,
+      "parameter": "IDSL",
+      "mu_star": 947953.2292766667,
+      "sigma": 3139704.91212
+    },
+    {
+      "Rank": 12,
+      "parameter": "TSUM1",
+      "mu_star": 776980.5604333334,
+      "sigma": 2011537.98458
+    },
+    {
+      "Rank": 13,
+      "parameter": "RFSETB200",
+      "mu_star": 681604.6108466666,
+      "sigma": 1363023.9841433333
+    },
+    {
+      "Rank": 14,
+      "parameter": "RMO",
+      "mu_star": 531501.3700366666,
+      "sigma": 1669619.1952533335
+    },
+    {
+      "Rank": 15,
+      "parameter": "RML",
+      "mu_star": 377169.6054966666,
+      "sigma": 697459.85826
+    },
+    {
+      "Rank": 16,
+      "parameter": "SLATB200",
+      "mu_star": 354791.66203666665,
+      "sigma": 858422.1104
+    },
+    {
+      "Rank": 17,
+      "parameter": "SLATB000",
+      "mu_star": 314059.7324,
+      "sigma": 720507.1124566667
+    },
+    {
+      "Rank": 18,
+      "parameter": "DLC",
+      "mu_star": 309266.2822533333,
+      "sigma": 1466660.0231700002
+    },
+    {
+      "Rank": 19,
+      "parameter": "TBASE",
+      "mu_star": 307178.6024133333,
+      "sigma": 840177.2235133334
+    },
+    {
+      "Rank": 20,
+      "parameter": "SLATB064",
+      "mu_star": 283629.78804,
+      "sigma": 828713.3685633333
+    },
+    {
+      "Rank": 21,
+      "parameter": "RMS",
+      "mu_star": 279708.01477666665,
+      "sigma": 620775.8742900001
+    },
+    {
+      "Rank": 22,
+      "parameter": "SLATB029",
+      "mu_star": 258477.25881,
+      "sigma": 1503616.1441066668
+    },
+    {
+      "Rank": 23,
+      "parameter": "AMAXTB014",
+      "mu_star": 252028.44492333333,
+      "sigma": 646341.4074
+    },
+    {
+      "Rank": 24,
+      "parameter": "DLO",
+      "mu_star": 173305.46373,
+      "sigma": 1087279.3102233333
+    },
+    {
+      "Rank": 25,
+      "parameter": "RFSETB000",
+      "mu_star": 167815.42867333334,
+      "sigma": 365454.19824666664
+    },
+    {
+      "Rank": 26,
+      "parameter": "RMR",
+      "mu_star": 157663.58655666665,
+      "sigma": 425343.22006333334
+    },
+    {
+      "Rank": 27,
+      "parameter": "AMAXTB000",
+      "mu_star": 149163.14009,
+      "sigma": 850726.7846433333
+    },
+    {
+      "Rank": 28,
+      "parameter": "CVL",
+      "mu_star": 145063.21416,
+      "sigma": 300877.55712
+    },
+    {
+      "Rank": 29,
+      "parameter": "RRI",
+      "mu_star": 102730.00396333334,
+      "sigma": 366589.01006666664
+    },
+    {
+      "Rank": 30,
+      "parameter": "RGRLAI",
+      "mu_star": 80764.94515999999,
+      "sigma": 801070.09606
+    },
+    {
+      "Rank": 31,
+      "parameter": "TBASEM",
+      "mu_star": 74143.58673000001,
+      "sigma": 166773.79991
+    },
+    {
+      "Rank": 32,
+      "parameter": "SLATB021",
+      "mu_star": 69388.73116333333,
+      "sigma": 250989.45462666667
+    },
+    {
+      "Rank": 33,
+      "parameter": "IAIRDU",
+      "mu_star": 63251.93197333333,
+      "sigma": 384724.94907000003
+    },
+    {
+      "Rank": 34,
+      "parameter": "CVS",
+      "mu_star": 58565.030276666665,
+      "sigma": 93036.46206666667
+    },
+    {
+      "Rank": 35,
+      "parameter": "TSUMEM",
+      "mu_star": 46590.084599999995,
+      "sigma": 106435.19478
+    },
+    {
+      "Rank": 36,
+      "parameter": "RDMCR",
+      "mu_star": 42648.03635666667,
+      "sigma": 241926.31833333333
+    },
+    {
+      "Rank": 37,
+      "parameter": "RDI",
+      "mu_star": 38139.91734666667,
+      "sigma": 186805.27549666667
+    },
+    {
+      "Rank": 38,
+      "parameter": "CVR",
+      "mu_star": 31594.76883,
+      "sigma": 103132.06363666666
+    },
+    {
+      "Rank": 39,
+      "parameter": "Q10",
+      "mu_star": 30502.74269333333,
+      "sigma": 58324.34943666667
+    },
+    {
+      "Rank": 40,
+      "parameter": "CFET",
+      "mu_star": 30397.024383333333,
+      "sigma": 188876.49556666665
+    },
+    {
+      "Rank": 41,
+      "parameter": "TEFFMX",
+      "mu_star": 27389.590780000002,
+      "sigma": 75960.09552333334
+    },
+    {
+      "Rank": 42,
+      "parameter": "DEPNR",
+      "mu_star": 22222.406376666666,
+      "sigma": 100050.87595
+    },
+    {
+      "Rank": 43,
+      "parameter": "TMPFTB008",
+      "mu_star": 10313.40844,
+      "sigma": 33141.21392
+    },
+    {
+      "Rank": 44,
+      "parameter": "IOX",
+      "mu_star": 9739.277803333332,
+      "sigma": 68317.83902666667
+    },
+    {
+      "Rank": 45,
+      "parameter": "PERDL",
+      "mu_star": 8048.2735600000005,
+      "sigma": 51800.67145666667
+    }
+  ],
+  "0.0": [
+    {
+      "Rank": 1,
+      "parameter": "DVSEND",
+      "mu_star": 3345986.116935,
+      "sigma": 4879680.027075
+    },
+    {
+      "Rank": 2,
+      "parameter": "TMPFTB035",
+      "mu_star": 1915180.4678375002,
+      "sigma": 3518929.109085
+    },
+    {
+      "Rank": 3,
+      "parameter": "AMAXTB082",
+      "mu_star": 1765774.6263875,
+      "sigma": 3277900.9915374997
+    },
+    {
+      "Rank": 4,
+      "parameter": "AMAXTB200",
+      "mu_star": 1764405.7277125001,
+      "sigma": 3163631.0881475
+    },
+    {
+      "Rank": 5,
+      "parameter": "TMPFTB020",
+      "mu_star": 1303406.73747,
+      "sigma": 2151325.3284400003
+    },
+    {
+      "Rank": 6,
+      "parameter": "TDWI",
+      "mu_star": 1267232.7351025,
+      "sigma": 3371623.7773325006
+    },
+    {
+      "Rank": 7,
+      "parameter": "TSUM2",
+      "mu_star": 1198460.01349,
+      "sigma": 2532017.34481
+    },
+    {
+      "Rank": 8,
+      "parameter": "SLATB100",
+      "mu_star": 1195854.08223,
+      "sigma": 2388842.2812925
+    },
+    {
+      "Rank": 9,
+      "parameter": "SPAN",
+      "mu_star": 1038673.93639,
+      "sigma": 2235266.0402174997
+    },
+    {
+      "Rank": 10,
+      "parameter": "CVO",
+      "mu_star": 793332.6529075,
+      "sigma": 1617707.2750775
+    },
+    {
+      "Rank": 11,
+      "parameter": "IDSL",
+      "mu_star": 777738.8895975,
+      "sigma": 2571085.9266175
+    },
+    {
+      "Rank": 12,
+      "parameter": "TSUM1",
+      "mu_star": 658617.4515775,
+      "sigma": 1575113.0669749998
+    },
+    {
+      "Rank": 13,
+      "parameter": "RFSETB200",
+      "mu_star": 588426.9107974999,
+      "sigma": 1364191.3824449999
+    },
+    {
+      "Rank": 14,
+      "parameter": "DLC",
+      "mu_star": 448422.2538225,
+      "sigma": 1938583.96984
+    },
+    {
+      "Rank": 15,
+      "parameter": "RMO",
+      "mu_star": 391123.32687750005,
+      "sigma": 1167748.4899600002
+    },
+    {
+      "Rank": 16,
+      "parameter": "SLATB000",
+      "mu_star": 364275.0980675,
+      "sigma": 892746.6315300001
+    },
+    {
+      "Rank": 17,
+      "parameter": "RML",
+      "mu_star": 320767.1123475,
+      "sigma": 602234.6709474999
+    },
+    {
+      "Rank": 18,
+      "parameter": "SLATB200",
+      "mu_star": 287301.6651625,
+      "sigma": 676794.4767825
+    },
+    {
+      "Rank": 19,
+      "parameter": "SLATB064",
+      "mu_star": 279276.3325375,
+      "sigma": 890829.25833
+    },
+    {
+      "Rank": 20,
+      "parameter": "AMAXTB014",
+      "mu_star": 240607.8696575,
+      "sigma": 605881.2740425
+    },
+    {
+      "Rank": 21,
+      "parameter": "TBASE",
+      "mu_star": 192612.36869,
+      "sigma": 621449.2837949999
+    },
+    {
+      "Rank": 22,
+      "parameter": "RMS",
+      "mu_star": 180098.9126125,
+      "sigma": 372914.3027925
+    },
+    {
+      "Rank": 23,
+      "parameter": "RFSETB000",
+      "mu_star": 162946.1460075,
+      "sigma": 355597.29078000004
+    },
+    {
+      "Rank": 24,
+      "parameter": "CVL",
+      "mu_star": 132437.43087500002,
+      "sigma": 299307.78876
+    },
+    {
+      "Rank": 25,
+      "parameter": "SLATB029",
+      "mu_star": 114235.55408999999,
+      "sigma": 366071.95575
+    },
+    {
+      "Rank": 26,
+      "parameter": "RMR",
+      "mu_star": 93495.7258275,
+      "sigma": 206304.66514
+    },
+    {
+      "Rank": 27,
+      "parameter": "DLO",
+      "mu_star": 72954.88447,
+      "sigma": 503691.55518749997
+    },
+    {
+      "Rank": 28,
+      "parameter": "AMAXTB000",
+      "mu_star": 71634.4485,
+      "sigma": 306823.28141
+    },
+    {
+      "Rank": 29,
+      "parameter": "SLATB021",
+      "mu_star": 71262.62121,
+      "sigma": 283831.0863625
+    },
+    {
+      "Rank": 30,
+      "parameter": "TBASEM",
+      "mu_star": 60076.93301,
+      "sigma": 176087.2969525
+    },
+    {
+      "Rank": 31,
+      "parameter": "RRI",
+      "mu_star": 58697.932055,
+      "sigma": 269559.3634925
+    },
+    {
+      "Rank": 32,
+      "parameter": "IAIRDU",
+      "mu_star": 55547.110107500004,
+      "sigma": 325926.99828249996
+    },
+    {
+      "Rank": 33,
+      "parameter": "CVS",
+      "mu_star": 54288.18215749999,
+      "sigma": 108292.3214325
+    },
+    {
+      "Rank": 34,
+      "parameter": "TSUMEM",
+      "mu_star": 49165.9543075,
+      "sigma": 159455.9350325
+    },
+    {
+      "Rank": 35,
+      "parameter": "TEFFMX",
+      "mu_star": 41850.3794125,
+      "sigma": 114824.18409249999
+    },
+    {
+      "Rank": 36,
+      "parameter": "RDI",
+      "mu_star": 40966.00407,
+      "sigma": 214409.66999750002
+    },
+    {
+      "Rank": 37,
+      "parameter": "RGRLAI",
+      "mu_star": 38557.39338,
+      "sigma": 314250.63327
+    },
+    {
+      "Rank": 38,
+      "parameter": "CFET",
+      "mu_star": 30504.603977500003,
+      "sigma": 215361.13036250003
+    },
+    {
+      "Rank": 39,
+      "parameter": "CVR",
+      "mu_star": 28644.1244275,
+      "sigma": 91756.84982999999
+    },
+    {
+      "Rank": 40,
+      "parameter": "PERDL",
+      "mu_star": 24868.9245275,
+      "sigma": 231410.94264750002
+    },
+    {
+      "Rank": 41,
+      "parameter": "Q10",
+      "mu_star": 17894.0443375,
+      "sigma": 47751.036550000004
+    },
+    {
+      "Rank": 42,
+      "parameter": "IOX",
+      "mu_star": 17296.731505,
+      "sigma": 103362.61773
+    },
+    {
+      "Rank": 43,
+      "parameter": "DEPNR",
+      "mu_star": 10527.8408825,
+      "sigma": 57702.0049475
+    },
+    {
+      "Rank": 44,
+      "parameter": "RDMCR",
+      "mu_star": 6900.8569425,
+      "sigma": 56205.37501
+    },
+    {
+      "Rank": 45,
+      "parameter": "TMPFTB008",
+      "mu_star": 1063.9387625,
+      "sigma": 3286.508085
+    }
+  ],
+  "3.0": [
+    {
+      "Rank": 1,
+      "parameter": "DVSEND",
+      "mu_star": 3168395.5874966667,
+      "sigma": 4521486.415003333
+    },
+    {
+      "Rank": 2,
+      "parameter": "TMPFTB035",
+      "mu_star": 2005792.2095299999,
+      "sigma": 3312600.3993100002
+    },
+    {
+      "Rank": 3,
+      "parameter": "AMAXTB200",
+      "mu_star": 1990623.86439,
+      "sigma": 3324979.1782433335
+    },
+    {
+      "Rank": 4,
+      "parameter": "AMAXTB082",
+      "mu_star": 1938177.35693,
+      "sigma": 3717781.179386667
+    },
+    {
+      "Rank": 5,
+      "parameter": "SLATB100",
+      "mu_star": 1311235.3480266668,
+      "sigma": 2547967.963483333
+    },
+    {
+      "Rank": 6,
+      "parameter": "TDWI",
+      "mu_star": 1258334.3942800001,
+      "sigma": 3521236.412173333
+    },
+    {
+      "Rank": 7,
+      "parameter": "TSUM2",
+      "mu_star": 1232262.4563433335,
+      "sigma": 2576600.80737
+    },
+    {
+      "Rank": 8,
+      "parameter": "TMPFTB020",
+      "mu_star": 1223533.7636833333,
+      "sigma": 1936378.2317266667
+    },
+    {
+      "Rank": 9,
+      "parameter": "SPAN",
+      "mu_star": 1175870.5398866667,
+      "sigma": 2298121.38418
+    },
+    {
+      "Rank": 10,
+      "parameter": "IDSL",
+      "mu_star": 863630.1270233333,
+      "sigma": 2819116.093003333
+    },
+    {
+      "Rank": 11,
+      "parameter": "CVO",
+      "mu_star": 769519.3877066667,
+      "sigma": 1526769.9462833332
+    },
+    {
+      "Rank": 12,
+      "parameter": "RFSETB200",
+      "mu_star": 607899.6781466666,
+      "sigma": 1374980.20518
+    },
+    {
+      "Rank": 13,
+      "parameter": "TSUM1",
+      "mu_star": 592593.2286966667,
+      "sigma": 1484699.2162733334
+    },
+    {
+      "Rank": 14,
+      "parameter": "RMO",
+      "mu_star": 439906.61885666667,
+      "sigma": 1336434.8629166668
+    },
+    {
+      "Rank": 15,
+      "parameter": "RML",
+      "mu_star": 350620.95610666665,
+      "sigma": 645319.9864433333
+    },
+    {
+      "Rank": 16,
+      "parameter": "DLC",
+      "mu_star": 329054.06706333335,
+      "sigma": 1408989.2975899999
+    },
+    {
+      "Rank": 17,
+      "parameter": "SLATB000",
+      "mu_star": 314709.65177,
+      "sigma": 756702.98045
+    },
+    {
+      "Rank": 18,
+      "parameter": "SLATB064",
+      "mu_star": 297172.98051,
+      "sigma": 987669.80622
+    },
+    {
+      "Rank": 19,
+      "parameter": "SLATB200",
+      "mu_star": 296772.31198,
+      "sigma": 690172.10477
+    },
+    {
+      "Rank": 20,
+      "parameter": "RMS",
+      "mu_star": 252397.408,
+      "sigma": 669846.21663
+    },
+    {
+      "Rank": 21,
+      "parameter": "AMAXTB014",
+      "mu_star": 247077.82180333333,
+      "sigma": 607503.7446
+    },
+    {
+      "Rank": 22,
+      "parameter": "TBASE",
+      "mu_star": 183880.89120666668,
+      "sigma": 511443.52435666666
+    },
+    {
+      "Rank": 23,
+      "parameter": "RFSETB000",
+      "mu_star": 176233.4,
+      "sigma": 369986.0759633333
+    },
+    {
+      "Rank": 24,
+      "parameter": "SLATB029",
+      "mu_star": 162459.49541,
+      "sigma": 780905.0884166666
+    },
+    {
+      "Rank": 25,
+      "parameter": "RMR",
+      "mu_star": 145679.9683933333,
+      "sigma": 417724.85221000004
+    },
+    {
+      "Rank": 26,
+      "parameter": "AMAXTB000",
+      "mu_star": 142388.27896,
+      "sigma": 716321.32023
+    },
+    {
+      "Rank": 27,
+      "parameter": "CVL",
+      "mu_star": 136145.94435,
+      "sigma": 254314.56039666667
+    },
+    {
+      "Rank": 28,
+      "parameter": "DLO",
+      "mu_star": 136121.14667333334,
+      "sigma": 964027.44977
+    },
+    {
+      "Rank": 29,
+      "parameter": "IAIRDU",
+      "mu_star": 98100.38961666667,
+      "sigma": 602140.5519833334
+    },
+    {
+      "Rank": 30,
+      "parameter": "TBASEM",
+      "mu_star": 80789.52266,
+      "sigma": 234432.67032
+    },
+    {
+      "Rank": 31,
+      "parameter": "RRI",
+      "mu_star": 78306.60336666666,
+      "sigma": 344505.6112366666
+    },
+    {
+      "Rank": 32,
+      "parameter": "SLATB021",
+      "mu_star": 70294.74492,
+      "sigma": 304200.4369866667
+    },
+    {
+      "Rank": 33,
+      "parameter": "CVS",
+      "mu_star": 64484.021843333336,
+      "sigma": 123619.45441
+    },
+    {
+      "Rank": 34,
+      "parameter": "TSUMEM",
+      "mu_star": 59340.930623333334,
+      "sigma": 236606.14906333335
+    },
+    {
+      "Rank": 35,
+      "parameter": "RDI",
+      "mu_star": 41734.60994333333,
+      "sigma": 202649.6034033333
+    },
+    {
+      "Rank": 36,
+      "parameter": "TEFFMX",
+      "mu_star": 37346.99671,
+      "sigma": 100830.93491666667
+    },
+    {
+      "Rank": 37,
+      "parameter": "CFET",
+      "mu_star": 35561.69523666667,
+      "sigma": 223232.81883666667
+    },
+    {
+      "Rank": 38,
+      "parameter": "RGRLAI",
+      "mu_star": 34638.703766666666,
+      "sigma": 339321.3529333333
+    },
+    {
+      "Rank": 39,
+      "parameter": "CVR",
+      "mu_star": 34121.850373333335,
+      "sigma": 109401.37573333333
+    },
+    {
+      "Rank": 40,
+      "parameter": "Q10",
+      "mu_star": 22730.452146666667,
+      "sigma": 67286.89977333332
+    },
+    {
+      "Rank": 41,
+      "parameter": "RDMCR",
+      "mu_star": 14481.547633333334,
+      "sigma": 109967.74716333333
+    },
+    {
+      "Rank": 42,
+      "parameter": "DEPNR",
+      "mu_star": 13023.28745,
+      "sigma": 63342.92556
+    },
+    {
+      "Rank": 43,
+      "parameter": "IOX",
+      "mu_star": 8758.979296666666,
+      "sigma": 54701.048063333335
+    },
+    {
+      "Rank": 44,
+      "parameter": "PERDL",
+      "mu_star": 4395.217133333334,
+      "sigma": 28051.28646666667
+    },
+    {
+      "Rank": 45,
+      "parameter": "TMPFTB008",
+      "mu_star": 2189.6361533333334,
+      "sigma": 5642.074536666667
+    }
+  ]
+}
