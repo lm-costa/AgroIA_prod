@@ -3,1088 +3,1088 @@
     {
       "Rank": 1,
       "parameter": "DVSEND",
-      "mu_star": 4230612.366466667,
-      "sigma": 5665648.713839999
+      "mu_star": 4309885.159147457,
+      "sigma": 5809071.676359322
     },
     {
       "Rank": 2,
-      "parameter": "AMAXTB200",
-      "mu_star": 2424064.91871,
-      "sigma": 3774207.05889
+      "parameter": "TMPFTB020",
+      "mu_star": 2453946.0649779662,
+      "sigma": 3723167.2742423727
     },
     {
       "Rank": 3,
-      "parameter": "TMPFTB020",
-      "mu_star": 2403858.404266667,
-      "sigma": 3769680.9477899997
+      "parameter": "AMAXTB200",
+      "mu_star": 2263687.447959322,
+      "sigma": 3652409.3844661014
     },
     {
       "Rank": 4,
       "parameter": "AMAXTB082",
-      "mu_star": 2019209.2352433333,
-      "sigma": 3943787.87977
+      "mu_star": 1727490.5735474578,
+      "sigma": 3191840.828657627
     },
     {
       "Rank": 5,
-      "parameter": "TSUM2",
-      "mu_star": 1722289.1293433334,
-      "sigma": 4019727.3460899997
+      "parameter": "SLATB100",
+      "mu_star": 1348994.9507423728,
+      "sigma": 2658744.1205610167
     },
     {
       "Rank": 6,
-      "parameter": "SPAN",
-      "mu_star": 1414385.1338966668,
-      "sigma": 2692284.8483433337
+      "parameter": "TSUM2",
+      "mu_star": 1340772.7028881358,
+      "sigma": 2917693.636105085
     },
     {
       "Rank": 7,
       "parameter": "TMPFTB035",
-      "mu_star": 1309273.3591766667,
-      "sigma": 2327703.2759033334
+      "mu_star": 1214796.8886711865,
+      "sigma": 2446464.550038983
     },
     {
       "Rank": 8,
-      "parameter": "TDWI",
-      "mu_star": 1271987.3751933335,
-      "sigma": 3443930.00323
+      "parameter": "SPAN",
+      "mu_star": 1170450.368023729,
+      "sigma": 2364465.086122034
     },
     {
       "Rank": 9,
-      "parameter": "SLATB100",
-      "mu_star": 1254405.3891866666,
-      "sigma": 2435323.25485
+      "parameter": "TDWI",
+      "mu_star": 1107473.5276355932,
+      "sigma": 3014315.859779661
     },
     {
       "Rank": 10,
       "parameter": "CVO",
-      "mu_star": 1116731.86858,
-      "sigma": 1992786.1719833335
+      "mu_star": 1033675.4339101695,
+      "sigma": 2000678.1382711863
     },
     {
       "Rank": 11,
       "parameter": "IDSL",
-      "mu_star": 981987.2507966666,
-      "sigma": 3277347.1683466667
+      "mu_star": 934747.374618644,
+      "sigma": 3221080.366511864
     },
     {
       "Rank": 12,
       "parameter": "TSUM1",
-      "mu_star": 861991.63102,
-      "sigma": 2201299.579836667
+      "mu_star": 887774.6638898305,
+      "sigma": 2184797.4425711865
     },
     {
       "Rank": 13,
       "parameter": "RFSETB200",
-      "mu_star": 693371.6991133334,
-      "sigma": 1315525.8928366667
+      "mu_star": 662800.1432644068,
+      "sigma": 1252455.379422034
     },
     {
       "Rank": 14,
       "parameter": "RMO",
-      "mu_star": 534287.92993,
-      "sigma": 1732426.8650166665
+      "mu_star": 455696.5757813559,
+      "sigma": 1352453.5533322033
     },
     {
       "Rank": 15,
-      "parameter": "TBASE",
-      "mu_star": 390138.2758033333,
-      "sigma": 1046591.8666966667
+      "parameter": "SLATB000",
+      "mu_star": 434461.49589152547,
+      "sigma": 1046155.6597711864
     },
     {
       "Rank": 16,
-      "parameter": "RML",
-      "mu_star": 367763.40694666666,
-      "sigma": 663239.59753
+      "parameter": "TBASE",
+      "mu_star": 423184.5411288135,
+      "sigma": 1148263.0592949153
     },
     {
       "Rank": 17,
-      "parameter": "SLATB200",
-      "mu_star": 365178.42018333334,
-      "sigma": 884920.4564566667
+      "parameter": "RML",
+      "mu_star": 407635.65225932206,
+      "sigma": 701903.9150762712
     },
     {
       "Rank": 18,
-      "parameter": "SLATB000",
-      "mu_star": 309072.2533833334,
-      "sigma": 707106.4836500001
+      "parameter": "DLC",
+      "mu_star": 391700.9283237288,
+      "sigma": 1842425.942798305
     },
     {
       "Rank": 19,
-      "parameter": "DLC",
-      "mu_star": 304149.08446,
-      "sigma": 1463451.4121566666
+      "parameter": "SLATB200",
+      "mu_star": 365925.30731525423,
+      "sigma": 1036796.0651661018
     },
     {
       "Rank": 20,
       "parameter": "SLATB064",
-      "mu_star": 279943.4683266666,
-      "sigma": 803193.15501
+      "mu_star": 300075.418840678,
+      "sigma": 884946.7801220339
     },
     {
       "Rank": 21,
       "parameter": "RMS",
-      "mu_star": 268904.70654,
-      "sigma": 534377.4014133334
+      "mu_star": 273154.0613508475,
+      "sigma": 538861.1825389831
     },
     {
       "Rank": 22,
-      "parameter": "SLATB029",
-      "mu_star": 250957.24290666668,
-      "sigma": 1471591.8728500002
+      "parameter": "AMAXTB014",
+      "mu_star": 268882.3674762712,
+      "sigma": 756508.188720339
     },
     {
       "Rank": 23,
-      "parameter": "AMAXTB014",
-      "mu_star": 235647.93349999998,
-      "sigma": 657355.8987466667
+      "parameter": "SLATB029",
+      "mu_star": 206383.977120339,
+      "sigma": 990834.5932322034
     },
     {
       "Rank": 24,
       "parameter": "RFSETB000",
-      "mu_star": 173834.91051,
-      "sigma": 383902.11300666665
+      "mu_star": 179005.97864745764,
+      "sigma": 398264.7928288136
     },
     {
       "Rank": 25,
-      "parameter": "DLO",
-      "mu_star": 171259.44528333333,
-      "sigma": 1122565.2129199998
+      "parameter": "CVL",
+      "mu_star": 168490.37357118644,
+      "sigma": 339735.2950677966
     },
     {
       "Rank": 26,
       "parameter": "RMR",
-      "mu_star": 151892.83216666666,
-      "sigma": 376231.63283333334
+      "mu_star": 154602.42489152544,
+      "sigma": 375687.3968186441
     },
     {
       "Rank": 27,
-      "parameter": "CVL",
-      "mu_star": 148453.22960333334,
-      "sigma": 318359.09869
+      "parameter": "DLO",
+      "mu_star": 93555.47072542373,
+      "sigma": 606249.5152610169
     },
     {
       "Rank": 28,
-      "parameter": "AMAXTB000",
-      "mu_star": 113186.16516333332,
-      "sigma": 657068.1529699999
+      "parameter": "RRI",
+      "mu_star": 91535.14840847458,
+      "sigma": 427543.76848305087
     },
     {
       "Rank": 29,
-      "parameter": "RRI",
-      "mu_star": 85680.88663666666,
-      "sigma": 360084.92332999996
+      "parameter": "AMAXTB000",
+      "mu_star": 86617.25535423729,
+      "sigma": 423398.9429881356
     },
     {
       "Rank": 30,
-      "parameter": "RGRLAI",
-      "mu_star": 81367.60936999999,
-      "sigma": 807457.8375733333
+      "parameter": "RDI",
+      "mu_star": 83883.70062372882,
+      "sigma": 412698.6805966102
     },
     {
       "Rank": 31,
       "parameter": "TBASEM",
-      "mu_star": 80669.32461666666,
-      "sigma": 196353.08764666665
+      "mu_star": 81688.14409152544,
+      "sigma": 193145.56342542372
     },
     {
       "Rank": 32,
-      "parameter": "Q10",
-      "mu_star": 60427.119763333336,
-      "sigma": 117119.76126333333
+      "parameter": "SLATB021",
+      "mu_star": 66501.27900169491,
+      "sigma": 184125.9221
     },
     {
       "Rank": 33,
-      "parameter": "SLATB021",
-      "mu_star": 57317.70414666667,
-      "sigma": 151061.36671
+      "parameter": "CVS",
+      "mu_star": 62726.08247966102,
+      "sigma": 127977.17592033898
     },
     {
       "Rank": 34,
-      "parameter": "CVS",
-      "mu_star": 55177.9868,
-      "sigma": 85215.61403666667
+      "parameter": "Q10",
+      "mu_star": 53316.08304745762,
+      "sigma": 110098.09596101695
     },
     {
       "Rank": 35,
-      "parameter": "RDI",
-      "mu_star": 50090.53735333333,
-      "sigma": 245221.58112666666
+      "parameter": "TSUMEM",
+      "mu_star": 47203.741477966105,
+      "sigma": 117855.34323559323
     },
     {
       "Rank": 36,
-      "parameter": "TSUMEM",
-      "mu_star": 45334.42605,
-      "sigma": 106576.98368666667
+      "parameter": "RGRLAI",
+      "mu_star": 44655.578974576274,
+      "sigma": 430707.72237457626
     },
     {
       "Rank": 37,
-      "parameter": "IAIRDU",
-      "mu_star": 45309.90386,
-      "sigma": 267200.74848333333
+      "parameter": "TMPFTB008",
+      "mu_star": 39806.3872779661,
+      "sigma": 126866.00152881356
     },
     {
       "Rank": 38,
-      "parameter": "TMPFTB008",
-      "mu_star": 43047.38536333333,
-      "sigma": 122866.33064333333
+      "parameter": "IAIRDU",
+      "mu_star": 29146.02431525424,
+      "sigma": 178258.87996101694
     },
     {
       "Rank": 39,
       "parameter": "CVR",
-      "mu_star": 30738.533829999997,
-      "sigma": 106003.56253333334
+      "mu_star": 24052.824698305085,
+      "sigma": 72054.20345762711
     },
     {
       "Rank": 40,
       "parameter": "CFET",
-      "mu_star": 27434.84521,
-      "sigma": 197712.56303666666
+      "mu_star": 22959.43220677966,
+      "sigma": 138954.59911355932
     },
     {
       "Rank": 41,
-      "parameter": "RDMCR",
-      "mu_star": 25122.37186,
-      "sigma": 146002.44230666666
+      "parameter": "DEPNR",
+      "mu_star": 21060.5241,
+      "sigma": 92859.50598474576
     },
     {
       "Rank": 42,
-      "parameter": "IOX",
-      "mu_star": 17343.528186666666,
-      "sigma": 112582.60156333333
+      "parameter": "RDMCR",
+      "mu_star": 16546.403345762712,
+      "sigma": 98238.53829491526
     },
     {
       "Rank": 43,
-      "parameter": "DEPNR",
-      "mu_star": 17319.198323333334,
-      "sigma": 73158.07183666667
+      "parameter": "IOX",
+      "mu_star": 14499.195669491524,
+      "sigma": 97059.6614677966
     },
     {
       "Rank": 44,
       "parameter": "TEFFMX",
-      "mu_star": 15091.537453333332,
-      "sigma": 47798.69375333333
+      "mu_star": 13391.613674576272,
+      "sigma": 44442.96731525424
     },
     {
       "Rank": 45,
       "parameter": "PERDL",
-      "mu_star": 11685.778103333334,
-      "sigma": 92952.55270666667
+      "mu_star": 9373.805681355932,
+      "sigma": 69500.05257966102
     }
   ],
   "1.0": [
     {
       "Rank": 1,
       "parameter": "DVSEND",
-      "mu_star": 3908569.15176,
-      "sigma": 5241546.984356667
+      "mu_star": 4025962.778602326,
+      "sigma": 5296505.820841861
     },
     {
       "Rank": 2,
       "parameter": "AMAXTB200",
-      "mu_star": 2420213.934166667,
-      "sigma": 3714841.74755
+      "mu_star": 2317857.632539535,
+      "sigma": 3585318.806611628
     },
     {
       "Rank": 3,
-      "parameter": "AMAXTB082",
-      "mu_star": 2037775.9036666667,
-      "sigma": 3931219.97689
+      "parameter": "TMPFTB020",
+      "mu_star": 2059794.9827999999,
+      "sigma": 3178366.7681860467
     },
     {
       "Rank": 4,
-      "parameter": "TMPFTB020",
-      "mu_star": 2027724.0376633334,
-      "sigma": 3070973.95988
+      "parameter": "AMAXTB082",
+      "mu_star": 1875715.9948255816,
+      "sigma": 3448391.9015255813
     },
     {
       "Rank": 5,
       "parameter": "TMPFTB035",
-      "mu_star": 1643290.7432333333,
-      "sigma": 2782490.6747966665
+      "mu_star": 1520076.9702232557,
+      "sigma": 2659632.2082093027
     },
     {
       "Rank": 6,
       "parameter": "TSUM2",
-      "mu_star": 1574515.7452466667,
-      "sigma": 3598565.26044
+      "mu_star": 1386297.511972093,
+      "sigma": 3020184.146872093
     },
     {
       "Rank": 7,
-      "parameter": "SPAN",
-      "mu_star": 1380700.0045033332,
-      "sigma": 2602289.695756667
+      "parameter": "SLATB100",
+      "mu_star": 1366353.2102674418,
+      "sigma": 2645821.0262372093
     },
     {
       "Rank": 8,
-      "parameter": "SLATB100",
-      "mu_star": 1303704.4611933334,
-      "sigma": 2477692.421366667
+      "parameter": "SPAN",
+      "mu_star": 1337641.120039535,
+      "sigma": 2612363.731448837
     },
     {
       "Rank": 9,
       "parameter": "TDWI",
-      "mu_star": 1256105.6616166667,
-      "sigma": 3413103.2447733334
+      "mu_star": 1204222.9492674419,
+      "sigma": 3275818.2476372095
     },
     {
       "Rank": 10,
       "parameter": "CVO",
-      "mu_star": 1027359.9244,
-      "sigma": 1855585.6985666668
+      "mu_star": 1034782.3592139535,
+      "sigma": 1875795.6798046513
     },
     {
       "Rank": 11,
       "parameter": "IDSL",
-      "mu_star": 947953.2292766667,
-      "sigma": 3139704.91212
+      "mu_star": 886566.8634627907,
+      "sigma": 3038530.1525209304
     },
     {
       "Rank": 12,
       "parameter": "TSUM1",
-      "mu_star": 776980.5604333334,
-      "sigma": 2011537.98458
+      "mu_star": 852815.986444186,
+      "sigma": 2150388.9359790697
     },
     {
       "Rank": 13,
       "parameter": "RFSETB200",
-      "mu_star": 681604.6108466666,
-      "sigma": 1363023.9841433333
+      "mu_star": 624677.7200186047,
+      "sigma": 1225212.537927907
     },
     {
       "Rank": 14,
       "parameter": "RMO",
-      "mu_star": 531501.3700366666,
-      "sigma": 1669619.1952533335
+      "mu_star": 511700.71780000004,
+      "sigma": 1509479.7665372093
     },
     {
       "Rank": 15,
-      "parameter": "RML",
-      "mu_star": 377169.6054966666,
-      "sigma": 697459.85826
+      "parameter": "SLATB000",
+      "mu_star": 418818.6901069768,
+      "sigma": 1004882.4690581396
     },
     {
       "Rank": 16,
-      "parameter": "SLATB200",
-      "mu_star": 354791.66203666665,
-      "sigma": 858422.1104
+      "parameter": "RML",
+      "mu_star": 381046.0452930232,
+      "sigma": 660397.2869627908
     },
     {
       "Rank": 17,
-      "parameter": "SLATB000",
-      "mu_star": 314059.7324,
-      "sigma": 720507.1124566667
+      "parameter": "SLATB200",
+      "mu_star": 358708.91697209305,
+      "sigma": 961745.946672093
     },
     {
       "Rank": 18,
-      "parameter": "DLC",
-      "mu_star": 309266.2822533333,
-      "sigma": 1466660.0231700002
+      "parameter": "TBASE",
+      "mu_star": 343195.5714883721,
+      "sigma": 889757.4760627907
     },
     {
       "Rank": 19,
-      "parameter": "TBASE",
-      "mu_star": 307178.6024133333,
-      "sigma": 840177.2235133334
+      "parameter": "DLC",
+      "mu_star": 297946.7559116279,
+      "sigma": 1401791.9970953488
     },
     {
       "Rank": 20,
       "parameter": "SLATB064",
-      "mu_star": 283629.78804,
-      "sigma": 828713.3685633333
+      "mu_star": 282776.0362255814,
+      "sigma": 886931.6378395349
     },
     {
       "Rank": 21,
       "parameter": "RMS",
-      "mu_star": 279708.01477666665,
-      "sigma": 620775.8742900001
+      "mu_star": 274120.23578604654,
+      "sigma": 588376.3640767442
     },
     {
       "Rank": 22,
-      "parameter": "SLATB029",
-      "mu_star": 258477.25881,
-      "sigma": 1503616.1441066668
+      "parameter": "AMAXTB014",
+      "mu_star": 266927.1821488372,
+      "sigma": 736643.7647953489
     },
     {
       "Rank": 23,
-      "parameter": "AMAXTB014",
-      "mu_star": 252028.44492333333,
-      "sigma": 646341.4074
+      "parameter": "SLATB029",
+      "mu_star": 223553.15361627907,
+      "sigma": 1162512.6305348836
     },
     {
       "Rank": 24,
-      "parameter": "DLO",
-      "mu_star": 173305.46373,
-      "sigma": 1087279.3102233333
+      "parameter": "RFSETB000",
+      "mu_star": 176550.25451627906,
+      "sigma": 399471.4333395349
     },
     {
       "Rank": 25,
-      "parameter": "RFSETB000",
-      "mu_star": 167815.42867333334,
-      "sigma": 365454.19824666664
+      "parameter": "RMR",
+      "mu_star": 153850.9685744186,
+      "sigma": 394663.43647441856
     },
     {
       "Rank": 26,
-      "parameter": "RMR",
-      "mu_star": 157663.58655666665,
-      "sigma": 425343.22006333334
+      "parameter": "CVL",
+      "mu_star": 150387.8618139535,
+      "sigma": 295563.07848372095
     },
     {
       "Rank": 27,
-      "parameter": "AMAXTB000",
-      "mu_star": 149163.14009,
-      "sigma": 850726.7846433333
+      "parameter": "DLO",
+      "mu_star": 130034.99123488372,
+      "sigma": 796384.2382674419
     },
     {
       "Rank": 28,
-      "parameter": "CVL",
-      "mu_star": 145063.21416,
-      "sigma": 300877.55712
+      "parameter": "AMAXTB000",
+      "mu_star": 119173.9966116279,
+      "sigma": 634352.9304069767
     },
     {
       "Rank": 29,
       "parameter": "RRI",
-      "mu_star": 102730.00396333334,
-      "sigma": 366589.01006666664
+      "mu_star": 108892.1476511628,
+      "sigma": 401391.2031930233
     },
     {
       "Rank": 30,
-      "parameter": "RGRLAI",
-      "mu_star": 80764.94515999999,
-      "sigma": 801070.09606
+      "parameter": "SLATB021",
+      "mu_star": 71514.45082790699,
+      "sigma": 226233.23147906977
     },
     {
       "Rank": 31,
       "parameter": "TBASEM",
-      "mu_star": 74143.58673000001,
-      "sigma": 166773.79991
+      "mu_star": 70849.24244651162,
+      "sigma": 159868.0384348837
     },
     {
       "Rank": 32,
-      "parameter": "SLATB021",
-      "mu_star": 69388.73116333333,
-      "sigma": 250989.45462666667
+      "parameter": "CVS",
+      "mu_star": 66843.4332,
+      "sigma": 130451.1762883721
     },
     {
       "Rank": 33,
-      "parameter": "IAIRDU",
-      "mu_star": 63251.93197333333,
-      "sigma": 384724.94907000003
+      "parameter": "RGRLAI",
+      "mu_star": 60494.3857744186,
+      "sigma": 586019.6213
     },
     {
       "Rank": 34,
-      "parameter": "CVS",
-      "mu_star": 58565.030276666665,
-      "sigma": 93036.46206666667
+      "parameter": "IAIRDU",
+      "mu_star": 51991.66313953489,
+      "sigma": 308114.87070465117
     },
     {
       "Rank": 35,
       "parameter": "TSUMEM",
-      "mu_star": 46590.084599999995,
-      "sigma": 106435.19478
+      "mu_star": 50440.518988372096,
+      "sigma": 122389.98407674418
     },
     {
       "Rank": 36,
       "parameter": "RDMCR",
-      "mu_star": 42648.03635666667,
-      "sigma": 241926.31833333333
+      "mu_star": 49960.38891627907,
+      "sigma": 254087.13293953487
     },
     {
       "Rank": 37,
       "parameter": "RDI",
-      "mu_star": 38139.91734666667,
-      "sigma": 186805.27549666667
+      "mu_star": 46529.89555581396,
+      "sigma": 216595.8183488372
     },
     {
       "Rank": 38,
-      "parameter": "CVR",
-      "mu_star": 31594.76883,
-      "sigma": 103132.06363666666
+      "parameter": "TEFFMX",
+      "mu_star": 30843.966893023255,
+      "sigma": 104047.03683488372
     },
     {
       "Rank": 39,
       "parameter": "Q10",
-      "mu_star": 30502.74269333333,
-      "sigma": 58324.34943666667
+      "mu_star": 27758.039679069767,
+      "sigma": 54777.21978372093
     },
     {
       "Rank": 40,
       "parameter": "CFET",
-      "mu_star": 30397.024383333333,
-      "sigma": 188876.49556666665
+      "mu_star": 26282.328055813952,
+      "sigma": 154196.47636744185
     },
     {
       "Rank": 41,
-      "parameter": "TEFFMX",
-      "mu_star": 27389.590780000002,
-      "sigma": 75960.09552333334
+      "parameter": "CVR",
+      "mu_star": 25868.430155813952,
+      "sigma": 80879.38117209302
     },
     {
       "Rank": 42,
       "parameter": "DEPNR",
-      "mu_star": 22222.406376666666,
-      "sigma": 100050.87595
+      "mu_star": 25022.080574418604,
+      "sigma": 107136.12905348837
     },
     {
       "Rank": 43,
-      "parameter": "TMPFTB008",
-      "mu_star": 10313.40844,
-      "sigma": 33141.21392
+      "parameter": "IOX",
+      "mu_star": 13791.59684883721,
+      "sigma": 88523.26676511628
     },
     {
       "Rank": 44,
-      "parameter": "IOX",
-      "mu_star": 9739.277803333332,
-      "sigma": 68317.83902666667
+      "parameter": "PERDL",
+      "mu_star": 8843.937251162792,
+      "sigma": 50403.383779069765
     },
     {
       "Rank": 45,
-      "parameter": "PERDL",
-      "mu_star": 8048.2735600000005,
-      "sigma": 51800.67145666667
+      "parameter": "TMPFTB008",
+      "mu_star": 8686.859744186046,
+      "sigma": 27507.943493023256
     }
   ],
   "0.0": [
     {
       "Rank": 1,
       "parameter": "DVSEND",
-      "mu_star": 3345986.116935,
-      "sigma": 4879680.027075
+      "mu_star": 3577066.0104965116,
+      "sigma": 5044372.426966279
     },
     {
       "Rank": 2,
-      "parameter": "TMPFTB035",
-      "mu_star": 1915180.4678375002,
-      "sigma": 3518929.109085
+      "parameter": "AMAXTB200",
+      "mu_star": 1833540.5687220932,
+      "sigma": 3299209.3306372096
     },
     {
       "Rank": 3,
-      "parameter": "AMAXTB082",
-      "mu_star": 1765774.6263875,
-      "sigma": 3277900.9915374997
+      "parameter": "TMPFTB035",
+      "mu_star": 1805924.3624662792,
+      "sigma": 3516062.6195197674
     },
     {
       "Rank": 4,
-      "parameter": "AMAXTB200",
-      "mu_star": 1764405.7277125001,
-      "sigma": 3163631.0881475
+      "parameter": "AMAXTB082",
+      "mu_star": 1568883.373216279,
+      "sigma": 2871619.0578581397
     },
     {
       "Rank": 5,
       "parameter": "TMPFTB020",
-      "mu_star": 1303406.73747,
-      "sigma": 2151325.3284400003
+      "mu_star": 1392114.4203313952,
+      "sigma": 2351732.0586604653
     },
     {
       "Rank": 6,
-      "parameter": "TDWI",
-      "mu_star": 1267232.7351025,
-      "sigma": 3371623.7773325006
+      "parameter": "SLATB100",
+      "mu_star": 1254205.6185069766,
+      "sigma": 2417869.552033721
     },
     {
       "Rank": 7,
-      "parameter": "TSUM2",
-      "mu_star": 1198460.01349,
-      "sigma": 2532017.34481
+      "parameter": "TDWI",
+      "mu_star": 1143232.3070534884,
+      "sigma": 2948403.353793023
     },
     {
       "Rank": 8,
-      "parameter": "SLATB100",
-      "mu_star": 1195854.08223,
-      "sigma": 2388842.2812925
+      "parameter": "TSUM2",
+      "mu_star": 1016219.0007802326,
+      "sigma": 2072359.887660465
     },
     {
       "Rank": 9,
       "parameter": "SPAN",
-      "mu_star": 1038673.93639,
-      "sigma": 2235266.0402174997
+      "mu_star": 949262.2854709303,
+      "sigma": 2066921.2009674418
     },
     {
       "Rank": 10,
       "parameter": "CVO",
-      "mu_star": 793332.6529075,
-      "sigma": 1617707.2750775
+      "mu_star": 817361.8700360465,
+      "sigma": 1697009.6346395349
     },
     {
       "Rank": 11,
       "parameter": "IDSL",
-      "mu_star": 777738.8895975,
-      "sigma": 2571085.9266175
+      "mu_star": 802953.8422069768,
+      "sigma": 2825560.1821709303
     },
     {
       "Rank": 12,
       "parameter": "TSUM1",
-      "mu_star": 658617.4515775,
-      "sigma": 1575113.0669749998
+      "mu_star": 692844.3398988371,
+      "sigma": 1679008.486226744
     },
     {
       "Rank": 13,
       "parameter": "RFSETB200",
-      "mu_star": 588426.9107974999,
-      "sigma": 1364191.3824449999
+      "mu_star": 569718.6529127907,
+      "sigma": 1202693.5919197674
     },
     {
       "Rank": 14,
-      "parameter": "DLC",
-      "mu_star": 448422.2538225,
-      "sigma": 1938583.96984
+      "parameter": "SLATB000",
+      "mu_star": 512090.17868023255,
+      "sigma": 1259789.5407186046
     },
     {
       "Rank": 15,
-      "parameter": "RMO",
-      "mu_star": 391123.32687750005,
-      "sigma": 1167748.4899600002
+      "parameter": "DLC",
+      "mu_star": 469258.7577011628,
+      "sigma": 2129289.3417174416
     },
     {
       "Rank": 16,
-      "parameter": "SLATB000",
-      "mu_star": 364275.0980675,
-      "sigma": 892746.6315300001
+      "parameter": "RMO",
+      "mu_star": 357707.19747558143,
+      "sigma": 1009572.6538918604
     },
     {
       "Rank": 17,
       "parameter": "RML",
-      "mu_star": 320767.1123475,
-      "sigma": 602234.6709474999
+      "mu_star": 351956.5538476744,
+      "sigma": 605544.3787639535
     },
     {
       "Rank": 18,
       "parameter": "SLATB200",
-      "mu_star": 287301.6651625,
-      "sigma": 676794.4767825
+      "mu_star": 322896.9257895349,
+      "sigma": 959965.0175825581
     },
     {
       "Rank": 19,
       "parameter": "SLATB064",
-      "mu_star": 279276.3325375,
-      "sigma": 890829.25833
+      "mu_star": 272598.23870232556,
+      "sigma": 816558.8843116278
     },
     {
       "Rank": 20,
       "parameter": "AMAXTB014",
-      "mu_star": 240607.8696575,
-      "sigma": 605881.2740425
+      "mu_star": 257909.2458755814,
+      "sigma": 723848.1272372094
     },
     {
       "Rank": 21,
       "parameter": "TBASE",
-      "mu_star": 192612.36869,
-      "sigma": 621449.2837949999
+      "mu_star": 252072.97040697676,
+      "sigma": 710757.6017058139
     },
     {
       "Rank": 22,
       "parameter": "RMS",
-      "mu_star": 180098.9126125,
-      "sigma": 372914.3027925
+      "mu_star": 221983.8451616279,
+      "sigma": 450430.84359883727
     },
     {
       "Rank": 23,
       "parameter": "RFSETB000",
-      "mu_star": 162946.1460075,
-      "sigma": 355597.29078000004
+      "mu_star": 176433.32552906976,
+      "sigma": 482511.7652069768
     },
     {
       "Rank": 24,
       "parameter": "CVL",
-      "mu_star": 132437.43087500002,
-      "sigma": 299307.78876
+      "mu_star": 157076.05625465116,
+      "sigma": 340133.90979302325
     },
     {
       "Rank": 25,
       "parameter": "SLATB029",
-      "mu_star": 114235.55408999999,
-      "sigma": 366071.95575
+      "mu_star": 133897.9390127907,
+      "sigma": 402421.63237209304
     },
     {
       "Rank": 26,
       "parameter": "RMR",
-      "mu_star": 93495.7258275,
-      "sigma": 206304.66514
+      "mu_star": 128218.14894999999,
+      "sigma": 300491.1435651163
     },
     {
       "Rank": 27,
-      "parameter": "DLO",
-      "mu_star": 72954.88447,
-      "sigma": 503691.55518749997
+      "parameter": "RRI",
+      "mu_star": 72643.82334418605,
+      "sigma": 315055.66135
     },
     {
       "Rank": 28,
-      "parameter": "AMAXTB000",
-      "mu_star": 71634.4485,
-      "sigma": 306823.28141
+      "parameter": "SLATB021",
+      "mu_star": 69294.89093255813,
+      "sigma": 229879.51222093022
     },
     {
       "Rank": 29,
-      "parameter": "SLATB021",
-      "mu_star": 71262.62121,
-      "sigma": 283831.0863625
+      "parameter": "TBASEM",
+      "mu_star": 60394.49975116279,
+      "sigma": 157922.67196395347
     },
     {
       "Rank": 30,
-      "parameter": "TBASEM",
-      "mu_star": 60076.93301,
-      "sigma": 176087.2969525
+      "parameter": "CVS",
+      "mu_star": 57841.67420465116,
+      "sigma": 126276.2599488372
     },
     {
       "Rank": 31,
-      "parameter": "RRI",
-      "mu_star": 58697.932055,
-      "sigma": 269559.3634925
+      "parameter": "AMAXTB000",
+      "mu_star": 54868.6540127907,
+      "sigma": 198160.7892511628
     },
     {
       "Rank": 32,
-      "parameter": "IAIRDU",
-      "mu_star": 55547.110107500004,
-      "sigma": 325926.99828249996
+      "parameter": "TSUMEM",
+      "mu_star": 49154.63400348837,
+      "sigma": 140876.66202093023
     },
     {
       "Rank": 33,
-      "parameter": "CVS",
-      "mu_star": 54288.18215749999,
-      "sigma": 108292.3214325
+      "parameter": "RDI",
+      "mu_star": 48618.73787209302,
+      "sigma": 246931.28463604653
     },
     {
       "Rank": 34,
-      "parameter": "TSUMEM",
-      "mu_star": 49165.9543075,
-      "sigma": 159455.9350325
+      "parameter": "IAIRDU",
+      "mu_star": 44215.77325,
+      "sigma": 253778.08873139534
     },
     {
       "Rank": 35,
-      "parameter": "TEFFMX",
-      "mu_star": 41850.3794125,
-      "sigma": 114824.18409249999
+      "parameter": "DLO",
+      "mu_star": 42350.26087209302,
+      "sigma": 275627.3838953488
     },
     {
       "Rank": 36,
-      "parameter": "RDI",
-      "mu_star": 40966.00407,
-      "sigma": 214409.66999750002
+      "parameter": "TEFFMX",
+      "mu_star": 37528.83397906977,
+      "sigma": 112556.88221627907
     },
     {
       "Rank": 37,
-      "parameter": "RGRLAI",
-      "mu_star": 38557.39338,
-      "sigma": 314250.63327
+      "parameter": "CFET",
+      "mu_star": 28804.66377441861,
+      "sigma": 184208.67831627908
     },
     {
       "Rank": 38,
-      "parameter": "CFET",
-      "mu_star": 30504.603977500003,
-      "sigma": 215361.13036250003
+      "parameter": "IOX",
+      "mu_star": 27184.152097674418,
+      "sigma": 163194.37140581396
     },
     {
       "Rank": 39,
-      "parameter": "CVR",
-      "mu_star": 28644.1244275,
-      "sigma": 91756.84982999999
+      "parameter": "DEPNR",
+      "mu_star": 22207.87661395349,
+      "sigma": 103446.2958372093
     },
     {
       "Rank": 40,
-      "parameter": "PERDL",
-      "mu_star": 24868.9245275,
-      "sigma": 231410.94264750002
+      "parameter": "CVR",
+      "mu_star": 20565.693711627908,
+      "sigma": 58600.698636046516
     },
     {
       "Rank": 41,
-      "parameter": "Q10",
-      "mu_star": 17894.0443375,
-      "sigma": 47751.036550000004
+      "parameter": "RGRLAI",
+      "mu_star": 19368.832539534884,
+      "sigma": 154442.39216511627
     },
     {
       "Rank": 42,
-      "parameter": "IOX",
-      "mu_star": 17296.731505,
-      "sigma": 103362.61773
+      "parameter": "Q10",
+      "mu_star": 18444.82674767442,
+      "sigma": 47081.1658
     },
     {
       "Rank": 43,
-      "parameter": "DEPNR",
-      "mu_star": 10527.8408825,
-      "sigma": 57702.0049475
+      "parameter": "RDMCR",
+      "mu_star": 15831.645158139534,
+      "sigma": 110628.32169883722
     },
     {
       "Rank": 44,
-      "parameter": "RDMCR",
-      "mu_star": 6900.8569425,
-      "sigma": 56205.37501
+      "parameter": "PERDL",
+      "mu_star": 14815.473239534884,
+      "sigma": 122210.31918139535
     },
     {
       "Rank": 45,
       "parameter": "TMPFTB008",
-      "mu_star": 1063.9387625,
-      "sigma": 3286.508085
+      "mu_star": 969.3739093023255,
+      "sigma": 3556.5643220930233
     }
   ],
   "3.0": [
     {
       "Rank": 1,
       "parameter": "DVSEND",
-      "mu_star": 3168395.5874966667,
-      "sigma": 4521486.415003333
+      "mu_star": 3389472.936576,
+      "sigma": 4696479.955912
     },
     {
       "Rank": 2,
-      "parameter": "TMPFTB035",
-      "mu_star": 2005792.2095299999,
-      "sigma": 3312600.3993100002
+      "parameter": "AMAXTB200",
+      "mu_star": 1917620.864904,
+      "sigma": 3251645.080786
     },
     {
       "Rank": 3,
-      "parameter": "AMAXTB200",
-      "mu_star": 1990623.86439,
-      "sigma": 3324979.1782433335
+      "parameter": "TMPFTB035",
+      "mu_star": 1836130.065492,
+      "sigma": 3252737.795162
     },
     {
       "Rank": 4,
       "parameter": "AMAXTB082",
-      "mu_star": 1938177.35693,
-      "sigma": 3717781.179386667
+      "mu_star": 1698135.31588,
+      "sigma": 3168488.647572
     },
     {
       "Rank": 5,
       "parameter": "SLATB100",
-      "mu_star": 1311235.3480266668,
-      "sigma": 2547967.963483333
+      "mu_star": 1322644.375892,
+      "sigma": 2563329.94807
     },
     {
       "Rank": 6,
-      "parameter": "TDWI",
-      "mu_star": 1258334.3942800001,
-      "sigma": 3521236.412173333
+      "parameter": "TMPFTB020",
+      "mu_star": 1265784.788306,
+      "sigma": 2066534.09554
     },
     {
       "Rank": 7,
-      "parameter": "TSUM2",
-      "mu_star": 1232262.4563433335,
-      "sigma": 2576600.80737
+      "parameter": "TDWI",
+      "mu_star": 1151288.988464,
+      "sigma": 3079244.0647799997
     },
     {
       "Rank": 8,
-      "parameter": "TMPFTB020",
-      "mu_star": 1223533.7636833333,
-      "sigma": 1936378.2317266667
+      "parameter": "SPAN",
+      "mu_star": 1083180.871734,
+      "sigma": 2222840.963202
     },
     {
       "Rank": 9,
-      "parameter": "SPAN",
-      "mu_star": 1175870.5398866667,
-      "sigma": 2298121.38418
+      "parameter": "TSUM2",
+      "mu_star": 1070762.46404,
+      "sigma": 2165898.5577579997
     },
     {
       "Rank": 10,
       "parameter": "IDSL",
-      "mu_star": 863630.1270233333,
-      "sigma": 2819116.093003333
+      "mu_star": 807888.431274,
+      "sigma": 2845185.499554
     },
     {
       "Rank": 11,
       "parameter": "CVO",
-      "mu_star": 769519.3877066667,
-      "sigma": 1526769.9462833332
+      "mu_star": 805496.228852,
+      "sigma": 1593027.5591240001
     },
     {
       "Rank": 12,
-      "parameter": "RFSETB200",
-      "mu_star": 607899.6781466666,
-      "sigma": 1374980.20518
+      "parameter": "TSUM1",
+      "mu_star": 702990.346608,
+      "sigma": 1688296.487556
     },
     {
       "Rank": 13,
-      "parameter": "TSUM1",
-      "mu_star": 592593.2286966667,
-      "sigma": 1484699.2162733334
+      "parameter": "RFSETB200",
+      "mu_star": 563021.75537,
+      "sigma": 1211328.136644
     },
     {
       "Rank": 14,
-      "parameter": "RMO",
-      "mu_star": 439906.61885666667,
-      "sigma": 1336434.8629166668
+      "parameter": "SLATB000",
+      "mu_star": 451723.395222,
+      "sigma": 1106143.196154
     },
     {
       "Rank": 15,
-      "parameter": "RML",
-      "mu_star": 350620.95610666665,
-      "sigma": 645319.9864433333
+      "parameter": "RMO",
+      "mu_star": 402223.095262,
+      "sigma": 1167344.071886
     },
     {
       "Rank": 16,
       "parameter": "DLC",
-      "mu_star": 329054.06706333335,
-      "sigma": 1408989.2975899999
+      "mu_star": 363200.42151600006,
+      "sigma": 1594648.541776
     },
     {
       "Rank": 17,
-      "parameter": "SLATB000",
-      "mu_star": 314709.65177,
-      "sigma": 756702.98045
+      "parameter": "RML",
+      "mu_star": 353038.0589,
+      "sigma": 611907.172738
     },
     {
       "Rank": 18,
-      "parameter": "SLATB064",
-      "mu_star": 297172.98051,
-      "sigma": 987669.80622
+      "parameter": "SLATB200",
+      "mu_star": 320313.027046,
+      "sigma": 902539.156532
     },
     {
       "Rank": 19,
-      "parameter": "SLATB200",
-      "mu_star": 296772.31198,
-      "sigma": 690172.10477
+      "parameter": "SLATB064",
+      "mu_star": 278098.205362,
+      "sigma": 923989.168016
     },
     {
       "Rank": 20,
-      "parameter": "RMS",
-      "mu_star": 252397.408,
-      "sigma": 669846.21663
+      "parameter": "AMAXTB014",
+      "mu_star": 260086.017662,
+      "sigma": 732705.385152
     },
     {
       "Rank": 21,
-      "parameter": "AMAXTB014",
-      "mu_star": 247077.82180333333,
-      "sigma": 607503.7446
+      "parameter": "RMS",
+      "mu_star": 246852.390982,
+      "sigma": 593249.641522
     },
     {
       "Rank": 22,
       "parameter": "TBASE",
-      "mu_star": 183880.89120666668,
-      "sigma": 511443.52435666666
+      "mu_star": 228771.71492400003,
+      "sigma": 595940.705882
     },
     {
       "Rank": 23,
       "parameter": "RFSETB000",
-      "mu_star": 176233.4,
-      "sigma": 369986.0759633333
+      "mu_star": 169256.300698,
+      "sigma": 384218.78717200004
     },
     {
       "Rank": 24,
       "parameter": "SLATB029",
-      "mu_star": 162459.49541,
-      "sigma": 780905.0884166666
+      "mu_star": 156118.277192,
+      "sigma": 634366.7045839999
     },
     {
       "Rank": 25,
-      "parameter": "RMR",
-      "mu_star": 145679.9683933333,
-      "sigma": 417724.85221000004
+      "parameter": "CVL",
+      "mu_star": 149426.983638,
+      "sigma": 300071.788222
     },
     {
       "Rank": 26,
-      "parameter": "AMAXTB000",
-      "mu_star": 142388.27896,
-      "sigma": 716321.32023
+      "parameter": "RMR",
+      "mu_star": 142213.018184,
+      "sigma": 367614.40377
     },
     {
       "Rank": 27,
-      "parameter": "CVL",
-      "mu_star": 136145.94435,
-      "sigma": 254314.56039666667
+      "parameter": "AMAXTB000",
+      "mu_star": 108291.99774600001,
+      "sigma": 545210.835634
     },
     {
       "Rank": 28,
       "parameter": "DLO",
-      "mu_star": 136121.14667333334,
-      "sigma": 964027.44977
+      "mu_star": 90168.72676599999,
+      "sigma": 616678.8177220001
     },
     {
       "Rank": 29,
       "parameter": "IAIRDU",
-      "mu_star": 98100.38961666667,
-      "sigma": 602140.5519833334
+      "mu_star": 78108.73932,
+      "sigma": 465553.173648
     },
     {
       "Rank": 30,
-      "parameter": "TBASEM",
-      "mu_star": 80789.52266,
-      "sigma": 234432.67032
+      "parameter": "RRI",
+      "mu_star": 73466.829822,
+      "sigma": 314048.091488
     },
     {
       "Rank": 31,
-      "parameter": "RRI",
-      "mu_star": 78306.60336666666,
-      "sigma": 344505.6112366666
+      "parameter": "SLATB021",
+      "mu_star": 71346.059322,
+      "sigma": 254390.94619199997
     },
     {
       "Rank": 32,
-      "parameter": "SLATB021",
-      "mu_star": 70294.74492,
-      "sigma": 304200.4369866667
+      "parameter": "TBASEM",
+      "mu_star": 69674.86239800001,
+      "sigma": 188705.70413399997
     },
     {
       "Rank": 33,
       "parameter": "CVS",
-      "mu_star": 64484.021843333336,
-      "sigma": 123619.45441
+      "mu_star": 63835.322532,
+      "sigma": 127890.212974
     },
     {
       "Rank": 34,
       "parameter": "TSUMEM",
-      "mu_star": 59340.930623333334,
-      "sigma": 236606.14906333335
+      "mu_star": 54773.874324000004,
+      "sigma": 190085.833364
     },
     {
       "Rank": 35,
       "parameter": "RDI",
-      "mu_star": 41734.60994333333,
-      "sigma": 202649.6034033333
+      "mu_star": 39124.817184,
+      "sigma": 181874.505992
     },
     {
       "Rank": 36,
       "parameter": "TEFFMX",
-      "mu_star": 37346.99671,
-      "sigma": 100830.93491666667
+      "mu_star": 38683.59525,
+      "sigma": 114024.48797
     },
     {
       "Rank": 37,
       "parameter": "CFET",
-      "mu_star": 35561.69523666667,
-      "sigma": 223232.81883666667
+      "mu_star": 28827.158614,
+      "sigma": 173135.063666
     },
     {
       "Rank": 38,
-      "parameter": "RGRLAI",
-      "mu_star": 34638.703766666666,
-      "sigma": 339321.3529333333
+      "parameter": "CVR",
+      "mu_star": 24792.67582,
+      "sigma": 75580.489774
     },
     {
       "Rank": 39,
-      "parameter": "CVR",
-      "mu_star": 34121.850373333335,
-      "sigma": 109401.37573333333
+      "parameter": "RDMCR",
+      "mu_star": 23574.62882,
+      "sigma": 148106.79359400002
     },
     {
       "Rank": 40,
       "parameter": "Q10",
-      "mu_star": 22730.452146666667,
-      "sigma": 67286.89977333332
+      "mu_star": 22082.475936,
+      "sigma": 62287.281597999994
     },
     {
       "Rank": 41,
-      "parameter": "RDMCR",
-      "mu_star": 14481.547633333334,
-      "sigma": 109967.74716333333
+      "parameter": "RGRLAI",
+      "mu_star": 21840.328254,
+      "sigma": 210107.39964000002
     },
     {
       "Rank": 42,
-      "parameter": "DEPNR",
-      "mu_star": 13023.28745,
-      "sigma": 63342.92556
+      "parameter": "IOX",
+      "mu_star": 21084.708201999998,
+      "sigma": 140571.674684
     },
     {
       "Rank": 43,
-      "parameter": "IOX",
-      "mu_star": 8758.979296666666,
-      "sigma": 54701.048063333335
+      "parameter": "DEPNR",
+      "mu_star": 18493.962172,
+      "sigma": 81596.02215199999
     },
     {
       "Rank": 44,
       "parameter": "PERDL",
-      "mu_star": 4395.217133333334,
-      "sigma": 28051.28646666667
+      "mu_star": 5818.972964,
+      "sigma": 30909.959332
     },
     {
       "Rank": 45,
       "parameter": "TMPFTB008",
-      "mu_star": 2189.6361533333334,
-      "sigma": 5642.074536666667
+      "mu_star": 2161.692356,
+      "sigma": 6515.249331999999
     }
   ]
 }

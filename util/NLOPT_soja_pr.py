@@ -62,7 +62,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
 
         for year in sorted(years_with_data):
             year_data_df = weather_df[weather_df['year'] == year].copy()
-            dyield_obs = year_data_df['dyield'].dropna()
+            dyield_obs = year_data_df['yield'].dropna()
 
             if len(dyield_obs) == 0:
                 continue
