@@ -20,7 +20,7 @@ from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 
 from SensitivityAnalyzer import MorrisScreeningAnalyzer, NetCDFDataLoader
-from utils_soja_pr import map_info_soja_pr, update_agro_management_file_soja_pr
+from utils_soja_pr import map_info_soja_pr, safe_elevation, update_agro_management_file_soja_pr
 
 # Importações do SALib usadas apenas dentro do método sobrescrito
 from SALib.analyze import morris as morris_analyzer_salib
@@ -98,7 +98,7 @@ class SoyMorrisScreeningAnalyzerPR(MorrisScreeningAnalyzer):
             soildata = CABOFileReader(fname=soil_path)
             sitedata = WOFOST72SiteDataProvider(WAV=100)
 
-            elevation = point_info.get('elevation', np.nan)
+            elevation = safe_elevation(point_info.get('elevation', np.nan))
             weather = self.create_weather_data_provider(weather_df, LAT, LON, elevation)
 
             agro_path_temp = self.paths['AGRO'] + f'_temp_{point_id}.yaml'

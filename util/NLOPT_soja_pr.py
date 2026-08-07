@@ -22,7 +22,7 @@ from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 
 from NLOPT_MultiYear import WOFOSTMultiYearOptimizer
-from utils_soja_pr import map_info_soja_pr, update_agro_management_file_soja_pr
+from utils_soja_pr import map_info_soja_pr, safe_elevation, update_agro_management_file_soja_pr
 
 
 class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
@@ -43,7 +43,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
     def prepare_multiyear_context(self, point_info, weather_df, cluster_id):
         LAT = point_info['latitude']
         LON = point_info['longitude']
-        elevation = point_info.get('elevation', np.nan)
+        elevation = safe_elevation(point_info.get('elevation', np.nan))
 
         calendar_info = map_info_soja_pr()
         soil_file = calendar_info['soil_file']
@@ -62,7 +62,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
 
         for year in sorted(years_with_data):
             year_data_df = weather_df[weather_df['year'] == year].copy()
-            dyield_obs = year_data_df['yield'].dropna()
+            dyield_obs = year_data_df['dyield'].dropna()
 
             if len(dyield_obs) == 0:
                 continue

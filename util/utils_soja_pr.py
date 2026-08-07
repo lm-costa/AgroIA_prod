@@ -11,7 +11,23 @@ atualizacao do arquivo de agromanagement que usa esse calendario.
 import os
 from datetime import datetime, timedelta
 
+import pandas as pd
 import yaml
+
+# Altitude media aproximada do planalto paranaense, usada como fallback
+# quando obter_elevacao_multiplas_fontes() nao consegue obter a elevacao real
+# de um municipio (ex: falha pontual na API da NASA POWER). ELEV so entra na
+# correcao atmosferica do calculo de ET0/radiacao -- um valor medio e muito
+# mais seguro do que propagar NaN, que o PCSE rejeita (WeatherDataContainer
+# valida ELEV contra o intervalo -300..6000 e nao aceita NaN).
+DEFAULT_ELEVATION_PR = 760.0
+
+
+def safe_elevation(value, default=DEFAULT_ELEVATION_PR):
+    """Retorna `value` como float, ou `default` se `value` for None/NaN."""
+    if value is None or pd.isna(value):
+        return default
+    return float(value)
 
 
 def setup_paths_soja_pr():
