@@ -1,0 +1,14 @@
+{
+  "point_id": "4116901",
+  "cluster_id": 0.0,
+  "rmse_aggregated": 1332.3164525115108,
+  "n_years": 10,
+  "n_stages": 9,
+  "stopped_early": false,
+  "execution_time_seconds": 1285.878042936325,
+  "mean_abs_error": 1125.2273040935934,
+  "bias": -310.175976146268,
+  "r2": -3.933162271980885,
+  "algorithm": "34",
+  "max_eval": 3000
+}
