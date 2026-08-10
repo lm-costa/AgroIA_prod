@@ -20,7 +20,7 @@ from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 
 from SensitivityAnalyzer import MorrisScreeningAnalyzer, NetCDFDataLoader
-from utils_soja_pr import map_info_soja_pr, safe_elevation, update_agro_management_file_soja_pr
+from utils_soja_pr import clamp_rdi_rdmcr, map_info_soja_pr, safe_elevation, update_agro_management_file_soja_pr
 
 # Importações do SALib usadas apenas dentro do método sobrescrito
 from SALib.analyze import morris as morris_analyzer_salib
@@ -64,6 +64,10 @@ class SoyMorrisScreeningAnalyzerPR(MorrisScreeningAnalyzer):
 
     CROP_NAME = 'soybean'
     VARIETY_NAME = 'Soybean_VanHeemst_1988'
+
+    def extract_model_params(self, X):
+        model_params = super().extract_model_params(X)
+        return clamp_rdi_rdmcr(model_params)
 
     def execute_morris_screening_for_point(self, params):
         nc_file, param_values, cluster_id = params

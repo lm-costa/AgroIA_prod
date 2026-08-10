@@ -22,7 +22,12 @@ from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 
 from NLOPT_MultiYear import WOFOSTMultiYearOptimizer
-from utils_soja_pr import map_info_soja_pr, safe_elevation, update_agro_management_file_soja_pr
+from utils_soja_pr import (
+    clamp_rdi_rdmcr,
+    map_info_soja_pr,
+    safe_elevation,
+    update_agro_management_file_soja_pr,
+)
 
 
 class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
@@ -39,6 +44,11 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         # Sobrescreve o CLUSTER_PARAMS herdado (calibrado para milho) pelo
         # ranking especifico de soja/PR obtido na etapa de Sensitivity Analysis.
         self.CLUSTER_PARAMS = cluster_params
+
+    @staticmethod
+    def extract_model_params(X, param_names):
+        model_params = WOFOSTMultiYearOptimizer.extract_model_params(X, param_names)
+        return clamp_rdi_rdmcr(model_params)
 
     def prepare_multiyear_context(self, point_info, weather_df, cluster_id):
         LAT = point_info['latitude']
@@ -89,6 +99,18 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         return years_data
 
 
+# IDSL, IAIRDU e IOX sao flags binarias/categoricas internas do WOFOST (ex:
+# IDSL escolhe o submodelo de fenologia -- so temperatura, +fotoperiodo,
+# +vernalizacao), nao parametros continuos de verdade. WOFOST_bounds() os
+# define como intervalo continuo (0, 1) por serem reaproveitados do pipeline
+# de milho, entao o NLOPT testa valores fracionarios (ex: 0.63) que nao
+# correspondem a nenhum estado valido do modelo e derrubam a simulacao
+# ('NoneType' object has no attribute 'add_variable'). Excluidos aqui do
+# conjunto otimizavel: ficam com o valor padrao definido na propria
+# variedade de cultura (Soybean_VanHeemst_1988), em vez de serem calibrados.
+EXCLUDED_PARAMS = {'IDSL', 'IAIRDU', 'IOX'}
+
+
 def load_cluster_params_from_ranking(ranking_json_path, top_n=44):
     """
     Le o ranking de sensibilidade por cluster salvo por 6.SA_Soja_PR.ipynb e
@@ -97,6 +119,9 @@ def load_cluster_params_from_ranking(ranking_json_path, top_n=44):
 
     Espera um JSON no formato:
         {"<cluster_id>": [{"Rank":1, "parameter": "TSUM1", "mu_star": ..., "sigma": ...}, ...], ...}
+
+    Parametros em EXCLUDED_PARAMS sao removidos do ranking antes de aplicar
+    top_n, entao nunca entram no conjunto otimizado pelo NLOPT.
     """
     import json
 
@@ -106,7 +131,10 @@ def load_cluster_params_from_ranking(ranking_json_path, top_n=44):
     cluster_params = {}
     for cluster_id_str, params_ranked in ranking.items():
         cluster_id = float(cluster_id_str)
-        names = [p['parameter'] for p in params_ranked[:top_n]]
+        names = [
+            p['parameter'] for p in params_ranked
+            if p['parameter'] not in EXCLUDED_PARAMS
+        ][:top_n]
         cluster_params[cluster_id] = names
 
     return cluster_params

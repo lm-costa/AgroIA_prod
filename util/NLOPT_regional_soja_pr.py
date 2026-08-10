@@ -39,6 +39,17 @@ EARLY_STAGE_THRESHOLD = 3
 # travaria a otimizacao quase sempre.
 FAILURE_TOLERANCE = 0.2
 
+# Produtividade simulada abaixo deste piso (kg/ha) e tratada como falha,
+# igual a uma simulacao que retornou NaN. Sem esse piso, um conjunto de
+# parametros que faz a lavoura "falhar sempre" (TWSO ~ 0, um resultado
+# numericamente valido, nao NaN) pode passar despercebido por
+# FAILURE_TOLERANCE e ainda minimizar o RMSE se a amostra de calibracao
+# tiver, por acaso, produtividade media baixa -- um ajuste que nao reflete
+# fenologia real e nao generaliza (e exatamente o padrao observado na
+# validacao holdout: parametros de um grupo simulando ~0 para qualquer
+# municipio de fora da amostra, independente do clima real daquele ano).
+MIN_PLAUSIBLE_YIELD = 300.0
+
 
 class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
     """Calibracao regional (1 conjunto de parametros por cluster ou por estado inteiro)."""
@@ -79,7 +90,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             yield_sim = self.run_wofost_simulation(
                 model_params, sample['parameters'], sample['weather'], sample['agromanagement']
             )
-            if np.isnan(yield_sim):
+            if np.isnan(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD:
                 n_falhas += 1
                 continue
             squared_errors.append((yield_sim - sample['dyield_target']) ** 2)

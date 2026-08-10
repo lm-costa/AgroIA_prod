@@ -1,4 +1,0 @@
-point_id,cluster_id,year,dyield_obs,dyield_sim,error,abs_error,r2,bias
-4119152,2.0,2022,3600.0,,,,,
-4119152,2.0,2023,3530.432876712329,,,,,
-4119152,2.0,2024,3462.0,,,,,

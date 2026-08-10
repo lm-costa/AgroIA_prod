@@ -30,6 +30,27 @@ def safe_elevation(value, default=DEFAULT_ELEVATION_PR):
     return float(value)
 
 
+def clamp_rdi_rdmcr(model_params):
+    """
+    Corrige RDI > RDMCR quando os dois aparecem juntos no dicionario de
+    parametros do WOFOST.
+
+    RDI (profundidade inicial de enraizamento, 10-50 cm) e RDMCR
+    (profundidade maxima de enraizamento, 50-400 cm) sao sorteados de forma
+    independente pelo NLOPT/Morris dentro dos seus proprios intervalos, mas
+    fisicamente RDI nunca pode exceder RDMCR. Como as faixas se sobrepoem
+    (10-50 vs 50-400), essa combinacao invalida acontece com frequencia e e
+    uma provavel fonte adicional (alem das flags IDSL/IAIRDU/IOX ja
+    excluidas) do erro 'NoneType' object has no attribute 'add_variable' na
+    inicializacao do WOFOST.
+    """
+    if 'RDI' in model_params and 'RDMCR' in model_params:
+        if model_params['RDI'] > model_params['RDMCR']:
+            model_params = dict(model_params)
+            model_params['RDI'] = model_params['RDMCR']
+    return model_params
+
+
 def setup_paths_soja_pr():
     """
     Configura os caminhos usados pelo pipeline soja/PR, em uma sub-arvore
