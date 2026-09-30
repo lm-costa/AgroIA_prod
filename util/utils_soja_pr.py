@@ -92,15 +92,19 @@ def map_info_soja_pr():
     atinge DVSEND, entao ciclos mais curtos terminam antes desse teto sem
     problema.
 
-    O arquivo de solo 'ec3.soil' e o mesmo usado como padrao para o Brasil no
-    pipeline de milho (util.utils.map_info); mantido por consistencia -- vale
-    revisar/trocar por um perfil especifico dos solos do PR se disponivel.
+    O arquivo de solo e 'ec4.soil' (perfil EC4-fine, oficial WOFOST) em vez
+    do 'ec3.soil' generico usado no pipeline de milho: dos 4 perfis EC
+    padrao (EC2/EC3/EC4/EC6), EC4-fine e o numericamente mais proximo dos
+    valores medidos de Latossolo Vermelho distroferrico -- o solo dominante
+    na faixa produtora de soja do PR (derivado de basalto, muito argiloso).
+    E uma proxy (os perfis EC sao cenarios genericos, nao um levantamento de
+    solo do PR), nao uma medicao local.
     """
     return {
         'calendar': "Nov-Mar",
         'sowing_month': 11,
         'max_duration': 120,
-        'soil_file': 'ec3.soil',
+        'soil_file': 'ec4.soil',
     }
 
 
