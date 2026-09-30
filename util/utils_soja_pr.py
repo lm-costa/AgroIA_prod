@@ -68,7 +68,7 @@ def setup_paths_soja_pr():
         'COMPLETO': os.path.join(data_dir, "completo"),
         'AGRO': os.path.join(agro_dir, 'agro_soybean_pr.agro'),
         'CROP': os.path.join(base_dir, "inputs", "data", 'crop'),
-        'SOIL': os.path.join(base_dir, "inputs", "data", "soil", "ec3.soil"),
+        'SOIL': os.path.join(base_dir, "inputs", "data", "soil", "ec4.soil"),
         'WEATHER_RAW': r"D:\_py\Clima_AgroIA\data-raw\xavier-data",
         'RESULTS': os.path.join(base_dir, "output", "soja_pr", "Sensitivity Analysis"),
         'OPTIMIZATION': os.path.join(base_dir, "output", "soja_pr", "Optimization"),
@@ -86,21 +86,20 @@ def map_info_soja_pr():
     """
     Calendario agricola e solo de referencia para a soja no Parana.
 
-    Semeadura em outubro (janela tipica de meados de setembro a novembro no
-    PR) e duracao maxima de 200 dias -- e apenas um teto de seguranca para o
-    AgroManagement: a colheita real e determinada dinamicamente pelo WOFOST
-    quando o estagio de desenvolvimento (DVS) atinge DVSEND, entao ciclos
-    mais curtos (grupos de maturacao precoces, ~100-140 dias) terminam antes
-    desse teto sem problema.
+    Semeadura em novembro e duracao maxima de 120 dias -- e apenas um teto de
+    seguranca para o AgroManagement: a colheita real e determinada
+    dinamicamente pelo WOFOST quando o estagio de desenvolvimento (DVS)
+    atinge DVSEND, entao ciclos mais curtos terminam antes desse teto sem
+    problema.
 
     O arquivo de solo 'ec3.soil' e o mesmo usado como padrao para o Brasil no
     pipeline de milho (util.utils.map_info); mantido por consistencia -- vale
     revisar/trocar por um perfil especifico dos solos do PR se disponivel.
     """
     return {
-        'calendar': "Oct-Mai",
-        'sowing_month': 10,
-        'max_duration': 200,
+        'calendar': "Nov-Mar",
+        'sowing_month': 11,
+        'max_duration': 120,
         'soil_file': 'ec3.soil',
     }
 

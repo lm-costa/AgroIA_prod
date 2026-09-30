@@ -101,12 +101,52 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         return np.sqrt(np.mean(squared_errors))
 
-    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5):
+    def _checkpoint_path(self, group_label):
+        return os.path.join(self.paths['OPTIMIZATION'], f"OPT_REGIONAL_group{group_label}_checkpoint.json")
+
+    def _save_checkpoint(self, group_label, stage_completed, optimized_params, min_rmse, group_params, max_params_per_stage):
+        checkpoint = {
+            'group_label': group_label,
+            'stage_completed': stage_completed,
+            'optimized_params': {k: float(v) for k, v in optimized_params.items()},
+            'min_rmse': float(min_rmse),
+            'group_params': group_params,
+            'max_params_per_stage': max_params_per_stage,
+        }
+        tmp_path = self._checkpoint_path(group_label) + '.tmp'
+        with open(tmp_path, 'w') as f:
+            json.dump(checkpoint, f, indent=2)
+        os.replace(tmp_path, self._checkpoint_path(group_label))
+
+    def _load_checkpoint(self, group_label, group_params, max_params_per_stage):
+        path = self._checkpoint_path(group_label)
+        if not os.path.exists(path):
+            return None
+
+        with open(path) as f:
+            checkpoint = json.load(f)
+
+        if checkpoint.get('group_params') != group_params or checkpoint.get('max_params_per_stage') != max_params_per_stage:
+            print(f"   ⚠️  Checkpoint de '{group_label}' encontrado mas com parametros/config diferentes -- ignorando e recomecando do zero.")
+            return None
+
+        return checkpoint
+
+    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True):
         """
         Otimizacao hierarquica (mesmo esquema em etapas de
         optimize_point_multiyear), mas sobre a lista combinada de amostras
         de varios municipios, produzindo UM conjunto de parametros para o
         grupo inteiro.
+
+        Salva um checkpoint (OPT_REGIONAL_group{label}_checkpoint.json) a
+        cada etapa concluida -- cada etapa pode levar horas com centenas de
+        amostras agregadas, entao perder tudo numa interrupcao (queda de
+        energia, kernel reiniciado, etc.) e caro demais para nao ter como
+        retomar. Com resume=True (padrao), se existir um checkpoint
+        compativel (mesmos group_params e max_params_per_stage), a
+        otimizacao continua da proxima etapa em vez de recomecar do zero;
+        resume=False ignora qualquer checkpoint existente.
         """
         start_time = time.time()
 
@@ -123,15 +163,29 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         group_params = [p for p in group_params if p not in EXCLUDED_PARAMS]
 
-        optimized_params = {}
-        min_rmse = float('inf')
-        optimization_stopped_early = False
-        stage = 0
-
         n_stages = max(1, (len(group_params) + max_params_per_stage - 1) // max_params_per_stage)
-        print(f"\n🔧 Iniciando otimizacao hierarquica ({n_stages} etapas, {len(group_params)} parametros)")
 
-        for stage in range(1, n_stages + 1):
+        checkpoint = self._load_checkpoint(group_label, group_params, max_params_per_stage) if resume else None
+
+        if checkpoint is not None:
+            optimized_params = checkpoint['optimized_params']
+            min_rmse = checkpoint['min_rmse']
+            start_stage = checkpoint['stage_completed'] + 1
+            print(f"   ♻️  Retomando do checkpoint: etapa {checkpoint['stage_completed']} ja concluida (RMSE = {min_rmse:.2f} kg/ha).")
+        else:
+            optimized_params = {}
+            min_rmse = float('inf')
+            start_stage = 1
+
+        optimization_stopped_early = False
+        stage = start_stage - 1
+
+        if start_stage > n_stages:
+            print(f"   ♻️  Checkpoint ja cobre todas as {n_stages} etapas -- pulando direto para as metricas.")
+
+        print(f"\n🔧 Iniciando/retomando otimizacao hierarquica ({n_stages} etapas, {len(group_params)} parametros)")
+
+        for stage in range(start_stage, n_stages + 1):
             end_idx = min(stage * max_params_per_stage, len(group_params))
             params_to_optimize = group_params[:end_idx]
 
@@ -176,10 +230,27 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
                 print(f"   ✅ Etapa {stage}/{n_stages}: RMSE regional = {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
 
+                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
+
                 if min_rmse < EARLY_STOPPING_RMSE_THRESHOLD:
                     print(f"\n🎉 RMSE regional < {EARLY_STOPPING_RMSE_THRESHOLD} kg/ha! Interrompendo otimizacao.")
                     optimization_stopped_early = True
                     break
+
+            except nlopt.RoundoffLimited:
+                # Codigo -3 do NLOPT ("erro de arredondamento"): a busca
+                # estagnou por limite de precisao numerica nesta etapa, nao e
+                # uma falha real. Ao contrario de outras excecoes, nao
+                # abandona as etapas seguintes -- mantem os parametros novos
+                # desta etapa no palpite inicial (x0) e segue em frente, para
+                # nao perder a chance de calibrar o restante dos parametros.
+                stage_time = time.time() - stage_start
+                print(f"   ⚠️  Etapa {stage}/{n_stages}: erro de arredondamento (busca estagnada, {stage_time:.1f}s) -- mantendo x0 e seguindo.")
+                for i, p in enumerate(params_to_optimize):
+                    if p not in optimized_params:
+                        optimized_params[p] = x0[i]
+
+                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
 
             except Exception as e:
                 print(f"   ❌ Erro na etapa {stage}: {e}")
@@ -203,6 +274,12 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         }
 
         self.save_group_results(result)
+
+        # Resultado final consolidado e salvo -- o checkpoint intermediario
+        # nao e mais necessario.
+        checkpoint_path = self._checkpoint_path(group_label)
+        if os.path.exists(checkpoint_path):
+            os.remove(checkpoint_path)
 
         for sample in samples:
             if os.path.exists(sample['agro_temp_file']):

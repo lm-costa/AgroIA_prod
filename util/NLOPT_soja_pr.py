@@ -12,6 +12,7 @@ resultados) e reaproveitado sem alteracao de NLOPT.py / NLOPT_MultiYear.py.
 """
 import os
 import shutil
+import traceback
 
 import numpy as np
 import pandas as pd
@@ -20,12 +21,14 @@ from pcse.base import ParameterProvider
 from pcse.input import CABOFileReader, YAMLAgroManagementReader
 from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
+from pcse.models import Wofost72_WLP_FD
 
 from NLOPT_MultiYear import WOFOSTMultiYearOptimizer
 from utils_soja_pr import (
     clamp_rdi_rdmcr,
     map_info_soja_pr,
     safe_elevation,
+    safra_ano_colheita,
     update_agro_management_file_soja_pr,
 )
 
@@ -36,6 +39,11 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
     CROP_NAME = 'soybean'
     VARIETY_NAME = 'Soybean_VanHeemst_1988'
 
+    # Quantas falhas de simulacao detalhar (params + traceback completo) antes
+    # de voltar a so logar a mensagem de erro resumida. Diagnostico -- ver
+    # docstring de run_wofost_simulation abaixo.
+    MAX_DEBUG_FAILURES = 3
+
     def __init__(self, paths, nc_loader, cluster_params, algorithm=None, max_eval=3000):
         import nlopt
         if algorithm is None:
@@ -44,19 +52,68 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         # Sobrescreve o CLUSTER_PARAMS herdado (calibrado para milho) pelo
         # ranking especifico de soja/PR obtido na etapa de Sensitivity Analysis.
         self.CLUSTER_PARAMS = cluster_params
+        self._debug_failures_logged = 0
 
     @staticmethod
     def extract_model_params(X, param_names):
         model_params = WOFOSTMultiYearOptimizer.extract_model_params(X, param_names)
         return clamp_rdi_rdmcr(model_params)
 
+    def run_wofost_simulation(self, model_params, parameters, weather, agromanagement):
+        """
+        Igual a WOFOSTOptimizer.run_wofost_simulation (util/NLOPT.py), exceto
+        que loga os parametros exatos e o traceback completo nas primeiras
+        MAX_DEBUG_FAILURES falhas -- diagnostico usado para achar a causa real
+        do 'NoneType' object has no attribute 'add_variable' (era a janela de
+        clima cortada por ano civil em prepare_multiyear_context, ja
+        corrigido abaixo; mantido como rede de seguranca para falhas futuras).
+        """
+        try:
+            self._configure_parameter_tables(model_params, parameters)
+            wofost = Wofost72_WLP_FD(parameters, weather, agromanagement)
+            wofost.run_till_terminate()
+
+            output = wofost.get_output()
+            if output:
+                final_output = output[-1]
+                return final_output.get('TWSO', 0) * 1000
+            return np.nan
+
+        except Exception as e:
+            if self._debug_failures_logged < self.MAX_DEBUG_FAILURES:
+                self._debug_failures_logged += 1
+                print(f"\n[DEBUG {self._debug_failures_logged}/{self.MAX_DEBUG_FAILURES}] Falha na simulacao: {e}")
+                print(f"[DEBUG] model_params: {model_params}")
+                traceback.print_exc()
+                print()
+            self.logger.error(f"Erro na simulação: {e}")
+            return np.nan
+
     def prepare_multiyear_context(self, point_info, weather_df, cluster_id):
+        """
+        Monta o clima/agromanagement de cada safra com dyield valido.
+
+        IMPORTANTE: a janela de clima de cada safra e selecionada por
+        INTERVALO DE DATAS real do ciclo (semeadura ate semeadura+duracao),
+        nao por ano civil. A versao anterior filtrava `weather_df['year'] ==
+        ano` (ano civil da data), o que corta o provider de clima em 31/dez
+        -- com semeadura em nov (2o semestre), o ciclo atravessa a virada do
+        ano, e o WOFOST quebra ('NoneType' object has no attribute
+        'add_variable') assim que a simulacao passa de 31/dez sem dado
+        climatico disponivel. Isso ja acontecia com out/200d tambem (so que
+        com folga ate dezembro), o que explica os ajustes suspeitosamente
+        rapidos/bons vistos antes: eram combinacoes de parametros com
+        fenologia curta o bastante pra "escapar" do corte de ano civil, nao
+        um ajuste agronomico real.
+        """
         LAT = point_info['latitude']
         LON = point_info['longitude']
         elevation = safe_elevation(point_info.get('elevation', np.nan))
 
         calendar_info = map_info_soja_pr()
         soil_file = calendar_info['soil_file']
+        sowing_month = calendar_info['sowing_month']
+        duration_days = calendar_info['max_duration']
 
         cropfile = YAMLCropDataProvider(fpath=self.paths['CROP'])
         cropfile.set_active_crop(self.CROP_NAME, self.VARIETY_NAME)
@@ -65,30 +122,45 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         soildata = CABOFileReader(fname=soil_path)
         sitedata = WOFOST72SiteDataProvider(WAV=100)
 
-        weather_df['year'] = pd.to_datetime(weather_df['date']).dt.year
-        years_with_data = weather_df[weather_df['dyield'].notna()]['year'].unique()
+        weather_df = weather_df.copy()
+        weather_df['date'] = pd.to_datetime(weather_df['date'])
+        weather_df = weather_df.sort_values('date').reset_index(drop=True)
+        weather_df['ano_safra'] = weather_df['date'].apply(safra_ano_colheita)
+
+        safras_com_dyield = sorted(weather_df.loc[weather_df['dyield'].notna(), 'ano_safra'].unique())
 
         years_data = []
 
-        for year in sorted(years_with_data):
-            year_data_df = weather_df[weather_df['year'] == year].copy()
-            dyield_obs = year_data_df['dyield'].dropna()
+        for safra in safras_com_dyield:
+            dyield_obs = weather_df.loc[weather_df['ano_safra'] == safra, 'dyield'].dropna()
 
             if len(dyield_obs) == 0:
                 continue
 
-            weather = self.create_weather_data_provider(year_data_df, LAT, LON, elevation)
+            # Ano civil de semeadura: se o mes de semeadura cai no 2o
+            # semestre (jul-dez), a safra e colhida no ano seguinte (mesma
+            # convencao de safra_ano_colheita); senao, semeadura e colheita
+            # caem no mesmo ano civil.
+            ano_semeadura = safra - 1 if sowing_month >= 7 else safra
+            crop_start = pd.Timestamp(year=int(ano_semeadura), month=sowing_month, day=1)
+            crop_end = crop_start + pd.Timedelta(days=duration_days)
 
-            agro_path_temp = f"{self.paths['AGRO']}_temp_{cluster_id}_{year}.yaml"
+            janela = weather_df[(weather_df['date'] >= crop_start) & (weather_df['date'] <= crop_end)]
+
+            if janela.empty or janela['date'].max() < crop_end:
+                continue
+
+            weather = self.create_weather_data_provider(janela, LAT, LON, elevation)
+
+            agro_path_temp = f"{self.paths['AGRO']}_temp_{cluster_id}_{safra}.yaml"
             shutil.copy(self.paths['AGRO'], agro_path_temp)
-            start_date = pd.to_datetime(year_data_df['date'].iloc[0])
-            update_agro_management_file_soja_pr(agro_path_temp, start_date)
+            update_agro_management_file_soja_pr(agro_path_temp, crop_start)
             agromanagement = YAMLAgroManagementReader(agro_path_temp)
 
             parameters = ParameterProvider(cropdata=cropfile, soildata=soildata, sitedata=sitedata)
 
             years_data.append({
-                'year': year,
+                'year': safra,
                 'weather': weather,
                 'agromanagement': agromanagement,
                 'parameters': parameters,
