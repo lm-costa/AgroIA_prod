@@ -50,6 +50,18 @@ FAILURE_TOLERANCE = 0.2
 # municipio de fora da amostra, independente do clima real daquele ano).
 MIN_PLAUSIBLE_YIELD = 300.0
 
+# Se uma etapa "convergir" com RMSE perto do teto de penalidade (1e10,
+# devolvido por objective_function_regional quando falhas demais acontecem),
+# isso NAO significa que o NLOPT achou um bom ajuste -- so significa que toda
+# a regiao testada nessa etapa falhou igual, e o 1e10 foi aceito como se
+# fosse um minimo valido (nenhuma excecao e lancada nesse caso, entao o
+# codigo aceitava esses parametros sem questionar). Qualquer RMSE acima
+# deste teto e tratado como etapa nao convergida -- essa e a causa raiz do
+# colapso observado no cluster 1.0 (parametros da etapa 8/9 travados no
+# 1e10 e aceitos, produzindo produtividade simulada ~0 para qualquer
+# municipio na validacao holdout).
+FAILURE_CEILING = 1e9
+
 
 class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
     """Calibracao regional (1 conjunto de parametros por cluster ou por estado inteiro)."""
@@ -204,7 +216,22 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 'fixed_params': optimized_params.copy(),
             }
 
-            opt.set_min_objective(lambda X, grad: self.objective_function_regional(X, grad, context))
+            # Rastreia o melhor (x, RMSE) visto durante a etapa por fora do
+            # proprio NLOPT: quando opt.optimize() lanca RoundoffLimited, o
+            # NLOPT aborta sem devolver o x correspondente ao ultimo
+            # last_optimum_value(), entao sem esse rastreamento perderiamos o
+            # progresso da etapa inteira. Tambem e usado para decidir se a
+            # etapa bateu no FAILURE_CEILING (nenhuma avaliacao valida).
+            best_track = {'x': None, 'rmse': float('inf')}
+
+            def tracked_objective(X, grad, _context=context, _best=best_track):
+                rmse = self.objective_function_regional(X, grad, _context)
+                if rmse < _best['rmse']:
+                    _best['rmse'] = rmse
+                    _best['x'] = list(X)
+                return rmse
+
+            opt.set_min_objective(tracked_objective)
 
             max_eval_stage = max(1, self.max_eval // n_stages)
             opt.set_maxeval(max_eval_stage)
@@ -219,41 +246,46 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                     lb, ub = bounds[p]
                     x0.append((lb + ub) / 2)
 
+            stage_start = time.time()
             try:
-                stage_start = time.time()
-                x_opt = opt.optimize(x0)
-                min_rmse = opt.last_optimum_value()
-                stage_time = time.time() - stage_start
-
-                for i, p in enumerate(params_to_optimize):
-                    optimized_params[p] = x_opt[i]
-
-                print(f"   ✅ Etapa {stage}/{n_stages}: RMSE regional = {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
-
-                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
-
-                if min_rmse < EARLY_STOPPING_RMSE_THRESHOLD:
-                    print(f"\n🎉 RMSE regional < {EARLY_STOPPING_RMSE_THRESHOLD} kg/ha! Interrompendo otimizacao.")
-                    optimization_stopped_early = True
-                    break
-
+                opt.optimize(x0)
             except nlopt.RoundoffLimited:
                 # Codigo -3 do NLOPT ("erro de arredondamento"): a busca
                 # estagnou por limite de precisao numerica nesta etapa, nao e
                 # uma falha real. Ao contrario de outras excecoes, nao
-                # abandona as etapas seguintes -- mantem os parametros novos
-                # desta etapa no palpite inicial (x0) e segue em frente, para
-                # nao perder a chance de calibrar o restante dos parametros.
-                stage_time = time.time() - stage_start
-                print(f"   ⚠️  Etapa {stage}/{n_stages}: erro de arredondamento (busca estagnada, {stage_time:.1f}s) -- mantendo x0 e seguindo.")
-                for i, p in enumerate(params_to_optimize):
-                    if p not in optimized_params:
-                        optimized_params[p] = x0[i]
-
-                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
-
+                # abandona as etapas seguintes -- usa o melhor resultado
+                # parcial rastreado em best_track e segue em frente.
+                print(f"   ⚠️  Etapa {stage}/{n_stages}: erro de arredondamento (busca estagnada) -- usando melhor resultado parcial.")
             except Exception as e:
                 print(f"   ❌ Erro na etapa {stage}: {e}")
+                break
+            stage_time = time.time() - stage_start
+
+            stage_rmse = best_track['rmse']
+            stage_x = best_track['x']
+
+            # Nenhuma avaliacao valida na etapa (ou todas bateram o teto de
+            # falha objective_function_regional=1e10): NAO aceita esses
+            # parametros, mantem os da etapa anterior e avanca para a
+            # proxima etapa (mais parametros podem ajudar a escapar da
+            # regiao inviavel). Aceitar silenciosamente aqui e o bug que
+            # colapsou o cluster 1.0 -- ver FAILURE_CEILING acima.
+            if stage_x is None or stage_rmse >= FAILURE_CEILING:
+                print(f"   ⚠️  Etapa {stage}/{n_stages}: nenhum resultado abaixo do teto de falha (RMSE={stage_rmse:.2e}) -- descartando etapa, mantendo parametros anteriores ({stage_time:.1f}s).")
+                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
+                continue
+
+            for i, p in enumerate(params_to_optimize):
+                optimized_params[p] = stage_x[i]
+            min_rmse = stage_rmse
+
+            print(f"   ✅ Etapa {stage}/{n_stages}: RMSE regional = {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
+
+            self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
+
+            if min_rmse < EARLY_STOPPING_RMSE_THRESHOLD:
+                print(f"\n🎉 RMSE regional < {EARLY_STOPPING_RMSE_THRESHOLD} kg/ha! Interrompendo otimizacao.")
+                optimization_stopped_early = True
                 break
 
         print("\n📈 Calculando metricas por municipio/ano com os parametros do grupo...")
