@@ -153,6 +153,22 @@ def update_agro_management_file_soja_pr(agro_path, start_date):
         yaml.dump(agro_data, f, default_flow_style=False, sort_keys=False)
 
 
+# Umidade-padrao de comercializacao da soja no Brasil (Instrucao Normativa
+# MAPA no 11/2018, classificacao de soja): 13% de umidade, base umida. O
+# rendimento do IBGE/LSPA (tabela 5457) e publicado nessa base, mas TWSO do
+# WOFOST e materia seca (0% de umidade) -- comparar os dois direto embute um
+# vies sistematico constante de ~13% no alvo de calibracao. `dyield`
+# permanece intocado (e o dado publicado, ja detrended); a conversao e
+# aplicada so no ponto de uso da calibracao, nunca sobrescrevendo o valor
+# original.
+SOYBEAN_MOISTURE_STANDARD = 0.13
+
+
+def to_dry_matter(yield_fresh_basis):
+    """Converte produtividade da base umida padrao (13%) para materia seca."""
+    return yield_fresh_basis * (1.0 - SOYBEAN_MOISTURE_STANDARD)
+
+
 def safra_ano_colheita(date):
     """
     Converte uma data para o 'ano-safra' (ano de colheita) da soja no PR,

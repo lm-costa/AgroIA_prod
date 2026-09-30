@@ -91,11 +91,25 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         RMSE agregado sobre todas as amostras do grupo, tolerando ate
         FAILURE_TOLERANCE de falhas de simulacao (em vez de descartar a
         tentativa inteira, como objective_function_multiyear faz).
+
+        O valor MINIMIZADO pelo NLOPT e o RMSE em escala log1p (log(1+x)),
+        nao o RMSE linear em kg/ha: com centenas de amostras agregadas
+        (municipio x safra), o erro ao quadrado de um municipio/ano de alta
+        produtividade domina a soma, entao o otimizador tende a sacrificar o
+        ajuste dos municipios/anos de baixa produtividade so para acertar os
+        de alta. log1p equaliza o peso de erros proporcionais em vez de
+        absolutos (mesma pratica da fase 10.5 do pipeline de referencia
+        Doutorado-master). O RMSE linear (kg/ha, interpretavel) e calculado
+        em paralelo e devolvido via `context['last_linear_rmse']` -- um
+        efeito colateral deliberado (context e mutavel e compartilhado com
+        quem chamou), usado so para logging/early-stopping em optimize_group,
+        nunca para a otimizacao em si.
         """
         model_params = self.extract_model_params(X, context['param_names'])
         model_params.update(context.get('fixed_params', {}))
 
-        squared_errors = []
+        log_squared_errors = []
+        linear_squared_errors = []
         n_falhas = 0
 
         for sample in context['years_data']:
@@ -105,13 +119,17 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             if np.isnan(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD:
                 n_falhas += 1
                 continue
-            squared_errors.append((yield_sim - sample['dyield_target']) ** 2)
+            target = sample['dyield_target']
+            log_squared_errors.append((np.log1p(yield_sim) - np.log1p(target)) ** 2)
+            linear_squared_errors.append((yield_sim - target) ** 2)
 
         n_total = len(context['years_data'])
-        if n_total == 0 or len(squared_errors) == 0 or (n_falhas / n_total) > FAILURE_TOLERANCE:
+        if n_total == 0 or len(log_squared_errors) == 0 or (n_falhas / n_total) > FAILURE_TOLERANCE:
+            context['last_linear_rmse'] = None
             return 1e10
 
-        return np.sqrt(np.mean(squared_errors))
+        context['last_linear_rmse'] = float(np.sqrt(np.mean(linear_squared_errors)))
+        return float(np.sqrt(np.mean(log_squared_errors)))
 
     def _checkpoint_path(self, group_label):
         return os.path.join(self.paths['OPTIMIZATION'], f"OPT_REGIONAL_group{group_label}_checkpoint.json")
@@ -222,13 +240,22 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             # last_optimum_value(), entao sem esse rastreamento perderiamos o
             # progresso da etapa inteira. Tambem e usado para decidir se a
             # etapa bateu no FAILURE_CEILING (nenhuma avaliacao valida).
-            best_track = {'x': None, 'rmse': float('inf')}
+            #
+            # 'rmse' e o valor MINIMIZADO pelo NLOPT (log1p, ver
+            # objective_function_regional) -- usado para achar o melhor
+            # ponto e para a comparacao com FAILURE_CEILING (o sentinela de
+            # falha, 1e10, e devolvido igual em qualquer escala). 'rmse_kg'
+            # e o RMSE linear (kg/ha) do MESMO ponto, capturado via
+            # context['last_linear_rmse'] -- usado so para early-stopping e
+            # logs legiveis, nunca para decidir qual ponto e o melhor.
+            best_track = {'x': None, 'rmse': float('inf'), 'rmse_kg': None}
 
             def tracked_objective(X, grad, _context=context, _best=best_track):
                 rmse = self.objective_function_regional(X, grad, _context)
                 if rmse < _best['rmse']:
                     _best['rmse'] = rmse
                     _best['x'] = list(X)
+                    _best['rmse_kg'] = _context.get('last_linear_rmse')
                 return rmse
 
             opt.set_min_objective(tracked_objective)
@@ -262,6 +289,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             stage_time = time.time() - stage_start
 
             stage_rmse = best_track['rmse']
+            stage_rmse_kg = best_track['rmse_kg']
             stage_x = best_track['x']
 
             # Nenhuma avaliacao valida na etapa (ou todas bateram o teto de
@@ -269,17 +297,23 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             # parametros, mantem os da etapa anterior e avanca para a
             # proxima etapa (mais parametros podem ajudar a escapar da
             # regiao inviavel). Aceitar silenciosamente aqui e o bug que
-            # colapsou o cluster 1.0 -- ver FAILURE_CEILING acima.
+            # colapsou o cluster 1.0 -- ver FAILURE_CEILING acima. O
+            # sentinela de falha (1e10) e o mesmo independente da escala,
+            # entao a comparacao com FAILURE_CEILING continua valida com
+            # stage_rmse em log1p.
             if stage_x is None or stage_rmse >= FAILURE_CEILING:
-                print(f"   ⚠️  Etapa {stage}/{n_stages}: nenhum resultado abaixo do teto de falha (RMSE={stage_rmse:.2e}) -- descartando etapa, mantendo parametros anteriores ({stage_time:.1f}s).")
+                print(f"   ⚠️  Etapa {stage}/{n_stages}: nenhum resultado abaixo do teto de falha (RMSE log1p={stage_rmse:.2e}) -- descartando etapa, mantendo parametros anteriores ({stage_time:.1f}s).")
                 self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
                 continue
 
             for i, p in enumerate(params_to_optimize):
                 optimized_params[p] = stage_x[i]
-            min_rmse = stage_rmse
+            # min_rmse (kg/ha) e o que orienta early-stopping e fica salvo
+            # como resultado do grupo -- interpretavel; a otimizacao em si
+            # foi guiada pelo RMSE log1p (stage_rmse).
+            min_rmse = stage_rmse_kg if stage_rmse_kg is not None else stage_rmse
 
-            print(f"   ✅ Etapa {stage}/{n_stages}: RMSE regional = {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
+            print(f"   ✅ Etapa {stage}/{n_stages}: RMSE log1p = {stage_rmse:.4f} | RMSE regional ≈ {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
 
             self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
 

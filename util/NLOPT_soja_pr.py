@@ -29,6 +29,7 @@ from utils_soja_pr import (
     map_info_soja_pr,
     safe_elevation,
     safra_ano_colheita,
+    to_dry_matter,
     update_agro_management_file_soja_pr,
 )
 
@@ -164,7 +165,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
                 'weather': weather,
                 'agromanagement': agromanagement,
                 'parameters': parameters,
-                'dyield_target': np.mean(dyield_obs.values),
+                'dyield_target': to_dry_matter(np.mean(dyield_obs.values)),
                 'agro_temp_file': agro_path_temp
             })
 
