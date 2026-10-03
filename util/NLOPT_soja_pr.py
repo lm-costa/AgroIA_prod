@@ -92,7 +92,14 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
 
     def prepare_multiyear_context(self, point_info, weather_df, cluster_id):
         """
-        Monta o clima/agromanagement de cada safra com dyield valido.
+        Monta o clima/agromanagement de cada safra com produtividade valida.
+
+        O alvo de calibracao usa a produtividade COM tendencia (coluna
+        'yield' do NetCDF, publicada pelo IBGE) e nao a serie 'dyield'
+        (detrended, com a tendencia tecnologica removida e ancorada no ano
+        mais recente). A chave do dicionario continua 'dyield_target' por
+        compatibilidade com o resto do pipeline (NLOPT_regional_soja_pr.py
+        usa esse mesmo nome), mas o valor vem de 'yield'.
 
         IMPORTANTE: a janela de clima de cada safra e selecionada por
         INTERVALO DE DATAS real do ciclo (semeadura ate semeadura+duracao),
@@ -128,14 +135,14 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         weather_df = weather_df.sort_values('date').reset_index(drop=True)
         weather_df['ano_safra'] = weather_df['date'].apply(safra_ano_colheita)
 
-        safras_com_dyield = sorted(weather_df.loc[weather_df['dyield'].notna(), 'ano_safra'].unique())
+        safras_com_yield = sorted(weather_df.loc[weather_df['yield'].notna(), 'ano_safra'].unique())
 
         years_data = []
 
-        for safra in safras_com_dyield:
-            dyield_obs = weather_df.loc[weather_df['ano_safra'] == safra, 'dyield'].dropna()
+        for safra in safras_com_yield:
+            yield_obs = weather_df.loc[weather_df['ano_safra'] == safra, 'yield'].dropna()
 
-            if len(dyield_obs) == 0:
+            if len(yield_obs) == 0:
                 continue
 
             # Ano civil de semeadura: se o mes de semeadura cai no 2o
@@ -165,7 +172,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
                 'weather': weather,
                 'agromanagement': agromanagement,
                 'parameters': parameters,
-                'dyield_target': to_dry_matter(np.mean(dyield_obs.values)),
+                'dyield_target': to_dry_matter(np.mean(yield_obs.values)),
                 'agro_temp_file': agro_path_temp
             })
 

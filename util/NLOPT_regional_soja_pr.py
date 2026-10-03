@@ -50,6 +50,19 @@ FAILURE_TOLERANCE = 0.2
 # municipio de fora da amostra, independente do clima real daquele ano).
 MIN_PLAUSIBLE_YIELD = 300.0
 
+# Teto de produtividade simulada (kg/ha): acima disso o resultado tambem e
+# tratado como falha, pelo mesmo motivo do piso acima mas no sentido
+# contrario. Sem este teto, parametros que fazem o WOFOST simular
+# crescimento descontrolado (ex: taxa de assimilacao maxima empurrada para
+# o limite superior do intervalo de busca) produzem TWSO na casa das
+# centenas de milhares de kg/ha -- fisicamente impossivel para soja (o
+# recorde mundial de produtividade e ~8-9 t/ha). Em escala log1p esse ponto
+# ainda pode parecer "razoavel" (log1p comprime valores grandes), entao sem
+# o teto o otimizador pode aceitar esses parametros -- foi exatamente o que
+# aconteceu no cluster 2.0 (RMSE log1p moderado, RMSE em kg/ha na casa das
+# centenas de milhares).
+MAX_PLAUSIBLE_YIELD = 8000.0
+
 # Se uma etapa "convergir" com RMSE perto do teto de penalidade (1e10,
 # devolvido por objective_function_regional quando falhas demais acontecem),
 # isso NAO significa que o NLOPT achou um bom ajuste -- so significa que toda
@@ -76,14 +89,37 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         mesmo cluster/ano (prepare_multiyear_context nao inclui o point_id
         no nome do arquivo, so o cluster_id -- inofensivo quando chamado uma
         vez por municipio, mas aqui chamamos varias vezes em sequencia).
+
+        Amostras cujo alvo observado (dyield_target, ja em materia seca)
+        esta fora da faixa plausivel [MIN_PLAUSIBLE_YIELD,
+        MAX_PLAUSIBLE_YIELD] sao descartadas aqui, antes de chegarem a
+        otimizacao. Um dyield_target invalido (ex: negativo, resultado de
+        um detrending que empurrou uma safra de quebra abaixo de zero) faz
+        np.log1p(target) devolver NaN em objective_function_regional,
+        contaminando a media de erros -- como NaN nunca e "menor" que o
+        sentinela inicial de best_track, a etapa inteira e descartada em
+        toda tentativa, sempre pelo mesmo motivo (foi o que aconteceu com o
+        cluster 3.0: 9/9 etapas rejeitadas).
         """
         samples = []
+        descartadas = 0
         for nc_file in nc_files:
             point_info, weather_df = self.nc_loader.load_point_data(nc_file)
             years_data = self.prepare_multiyear_context(point_info, weather_df, point_info['point_id'])
             for yd in years_data:
                 yd['point_id'] = point_info['point_id']
-            samples.extend(years_data)
+                target = yd['dyield_target']
+                if target < MIN_PLAUSIBLE_YIELD or target > MAX_PLAUSIBLE_YIELD:
+                    descartadas += 1
+                    continue
+                samples.append(yd)
+
+        if descartadas:
+            print(
+                f"⚠️  {descartadas} amostra(s) descartada(s) por dyield_target "
+                f"implausivel (fora de [{MIN_PLAUSIBLE_YIELD:.0f}, {MAX_PLAUSIBLE_YIELD:.0f}] kg/ha)"
+            )
+
         return samples
 
     def objective_function_regional(self, X, grad, context):
@@ -116,7 +152,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             yield_sim = self.run_wofost_simulation(
                 model_params, sample['parameters'], sample['weather'], sample['agromanagement']
             )
-            if np.isnan(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD:
+            if np.isnan(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD or yield_sim > MAX_PLAUSIBLE_YIELD:
                 n_falhas += 1
                 continue
             target = sample['dyield_target']
@@ -284,7 +320,12 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 # parcial rastreado em best_track e segue em frente.
                 print(f"   ⚠️  Etapa {stage}/{n_stages}: erro de arredondamento (busca estagnada) -- usando melhor resultado parcial.")
             except Exception as e:
-                print(f"   ❌ Erro na etapa {stage}: {e}")
+                # repr(e) (nao so {e}): algumas excecoes tem str() vazio e
+                # a mensagem "❌ Erro na etapa N: " sem nada depois nao da
+                # pra depurar. O traceback completo fica no log tambem.
+                print(f"   ❌ Erro na etapa {stage}: {e!r}")
+                import traceback
+                traceback.print_exc()
                 break
             stage_time = time.time() - stage_start
 
