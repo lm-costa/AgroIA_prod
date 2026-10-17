@@ -30,7 +30,10 @@ from utils import WOFOST_bounds
 EARLY_STOPPING_RMSE_THRESHOLD = 100  # kg/ha -- mesmo criterio da calibracao por municipio
 XTOL_REL_EARLY_STAGES = 1e-5
 XTOL_REL_LATER_STAGES = 1e-4
-FTOL_ABS = 0.1
+# Tolerancia absoluta de f no NLOPT. O objetivo e o RMSE em log1p, que
+# aproxima o erro relativo medio (0.1 ~ 10%); o valor antigo (0.1) vinha da
+# escala kg/ha e fazia o NLOPT parar com ~600 kg/ha de erro. 1e-3 ~ 0,1%.
+FTOL_ABS = 1e-3
 EARLY_STAGE_THRESHOLD = 3
 
 # Fracao maxima de amostras (municipio x ano) que podem falhar em uma
