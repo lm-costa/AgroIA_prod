@@ -77,7 +77,9 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
             output = wofost.get_output()
             if output:
                 final_output = output[-1]
-                return final_output.get('TWSO', 0) * 1000
+                # TWSO do PCSE ja esta em kg/ha (mesma unidade do IBGE/SIDRA
+                # 5457 var. 112); multiplicar por 1000 inflava a simulacao.
+                return final_output.get('TWSO', 0)
             return np.nan
 
         except Exception as e:
