@@ -16,13 +16,17 @@ def _sample(i, target=3000.0):
             'agro_temp_file': f"nao_existe_{i}.yaml"}
 
 
-def _optimizer(tmp_path, sim, max_eval=60):
+SPREAD_TARGETS = [1500.0, 2500.0, 3500.0, 4500.0, 2000.0]  # RMSE minimo >> limiar de parada antecipada
+
+
+def _optimizer(tmp_path, sim, max_eval=60, targets=None):
     import nlopt
     opt = object.__new__(reg.SoyWOFOSTRegionalOptimizerPR)
     opt.paths = {'OPTIMIZATION': str(tmp_path)}
     opt.algorithm = nlopt.LN_BOBYQA
     opt.max_eval = max_eval
-    opt.prepare_regional_samples = lambda nc_files: [_sample(i) for i in range(5)]
+    targets = targets or [3000.0] * 5
+    opt.prepare_regional_samples = lambda nc_files: [_sample(i, t) for i, t in enumerate(targets)]
     opt.run_wofost_simulation = sim
     return opt
 
@@ -85,3 +89,54 @@ def test_soja_sensitivity_analyzer_uses_kg_ha_directly():
     import SensitivityAnalyzer_soja_pr as sa
     assert sa.SoyMorrisScreeningAnalyzerPR.TWSO_TO_KG_HA == 1.0
     assert SensitivityAnalyzer.MorrisScreeningAnalyzer.TWSO_TO_KG_HA == 1000  # milho: inalterado
+
+
+def _spy_dims(monkeypatch):
+    import nlopt
+    dims = []
+    orig = nlopt.opt
+
+    def spy(alg, n):
+        dims.append(n)
+        return orig(alg, n)
+
+    monkeypatch.setattr(nlopt, 'opt', spy)
+    return dims
+
+
+def test_each_stage_searches_only_new_params(tmp_path, monkeypatch):
+    # Sem dimensoes mortas: etapa k otimiza so os parametros novos.
+    dims = _spy_dims(monkeypatch)
+    opt = _optimizer(tmp_path, _linear_sim, targets=SPREAD_TARGETS)
+    opt.optimize_group(['a.nc'], 3.0, ['TDWI', 'SPAN', 'TSUM1', 'TSUM2'], max_params_per_stage=2, resume=False)
+    assert dims == [2, 2]
+
+
+def test_previous_params_stay_frozen_in_later_stages(tmp_path):
+    seen = []
+
+    def sim(model_params, *a, **k):
+        seen.append(dict(model_params))
+        return _linear_sim(model_params)
+
+    opt = _optimizer(tmp_path, sim, targets=SPREAD_TARGETS)
+    res = opt.optimize_group(['a.nc'], 4.0, ['TDWI', 'SPAN'], max_params_per_stage=1, resume=False)
+    tdwi = res['optimized_params']['TDWI']
+    stage2 = [m for m in seen if 'SPAN' in m and m.get('TDWI') is not None and 'SPAN' in m]
+    assert stage2, "etapa 2 nao rodou"
+    assert all(m['TDWI'] == tdwi for m in stage2)
+
+
+def test_params_of_discarded_stage_are_retried(tmp_path, monkeypatch):
+    # SPAN sempre falha: etapa 2 e descartada; etapa 3 volta a tentar SPAN junto com TSUM1.
+    dims = _spy_dims(monkeypatch)
+
+    def sim(model_params, *a, **k):
+        if 'SPAN' in model_params:
+            return np.nan
+        return _linear_sim(model_params)
+
+    opt = _optimizer(tmp_path, sim, targets=SPREAD_TARGETS)
+    res = opt.optimize_group(['a.nc'], 5.0, ['TDWI', 'SPAN', 'TSUM1'], max_params_per_stage=1, resume=False)
+    assert dims == [1, 1, 2]
+    assert 'SPAN' not in res['optimized_params']

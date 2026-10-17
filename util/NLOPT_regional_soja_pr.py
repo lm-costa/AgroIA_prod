@@ -334,7 +334,17 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         for stage in range(start_stage, n_stages + 1):
             end_idx = min(stage * max_params_per_stage, len(group_params))
-            params_to_optimize = group_params[:end_idx]
+            # So os parametros ainda nao calibrados entram na busca. Os das
+            # etapas anteriores ja estao em optimized_params e sao fixados em
+            # context['fixed_params'] (que sobrescreve X): inclui-los no
+            # vetor de busca criava dimensoes mortas -- mudar X[i] nao alterava
+            # o objetivo -- e o BOBYQA gasta >= 2n+1 avaliacoes so para
+            # inicializar n dimensoes (etapa 9: 42 dimensoes para 5 efetivas).
+            # Parametros de uma etapa descartada (falha) voltam a ser
+            # tentados na etapa seguinte, como antes.
+            params_to_optimize = [p for p in group_params[:end_idx] if p not in optimized_params]
+            if not params_to_optimize:
+                continue
 
             bounds = WOFOST_bounds(params_to_optimize)
             stage_lower = [bounds[p][0] for p in params_to_optimize]
