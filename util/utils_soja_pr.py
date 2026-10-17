@@ -100,10 +100,12 @@ def map_info_soja_pr():
     E uma proxy (os perfis EC sao cenarios genericos, nao um levantamento de
     solo do PR), nao uma medicao local.
     """
+    # SOJA_PR_MAX_DURATION permite testar outro teto de duracao sem editar o
+    # codigo (usado nos experimentos de calibracao); o padrao e 120 dias.
     return {
         'calendar': "Nov-Mar",
         'sowing_month': 11,
-        'max_duration': 120,
+        'max_duration': int(os.environ.get('SOJA_PR_MAX_DURATION', 120)),
         'soil_file': 'ec4.soil',
     }
 
@@ -145,6 +147,10 @@ def update_agro_management_file_soja_pr(agro_path, start_date):
             crop_calendar = campaign_details['CropCalendar']
             crop_calendar['crop_start_date'] = crop_start_dt.date()
             crop_calendar['crop_end_date'] = crop_end_dt.date()
+            # O PCSE encerra a cultura em max_duration dias (crop_end_type
+            # 'maturity'), nao em crop_end_date. Sem isto o valor fixo do
+            # .agro (120) divergia do usado para montar a janela de clima.
+            crop_calendar['max_duration'] = duration_days
 
         new_campaign_definition = {crop_start_dt.date(): campaign_details}
         agro_data['AgroManagement'][0] = new_campaign_definition
