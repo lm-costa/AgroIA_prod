@@ -69,6 +69,15 @@ import contextlib
 import types
 
 
+def _set_pcse_forced_gc_skipped(skipped):
+    """Liga/desliga o bypass do gc.collect() explicito do PCSE; devolve o modulo gc anterior."""
+    import gc
+    import pcse.engine
+    previous = pcse.engine.gc
+    pcse.engine.gc = types.SimpleNamespace(collect=lambda *a, **k: 0) if skipped else gc
+    return previous
+
+
 @contextlib.contextmanager
 def skip_pcse_forced_gc(enabled=True):
     """
@@ -78,14 +87,15 @@ def skip_pcse_forced_gc(enabled=True):
     Dentro deste contexto essa chamada explicita e ignorada; o coletor
     automatico do Python continua ativo normalmente.
     """
-    import pcse.engine
-    original = pcse.engine.gc
-    if enabled:
-        pcse.engine.gc = types.SimpleNamespace(collect=lambda *a, **k: 0)
+    if not enabled:
+        yield
+        return
+    previous = _set_pcse_forced_gc_skipped(True)
     try:
         yield
     finally:
-        pcse.engine.gc = original
+        import pcse.engine
+        pcse.engine.gc = previous
 
 
 # Estado de cada processo-trabalhador (ver _worker_init). Cada trabalhador
@@ -100,7 +110,7 @@ def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval, skip_gc=Tr
     loader = SoyNetCDFDataLoader(paths['COMPLETO'])
     opt = optimizer_cls(paths, loader, {}, algorithm=algorithm, max_eval=max_eval)
     if skip_gc:
-        skip_pcse_forced_gc(True).__enter__()  # vale pelo resto da vida do processo
+        _set_pcse_forced_gc_skipped(True)  # vale pelo resto da vida do processo
     _WORKER['opt'] = opt
     _WORKER['samples'] = opt.prepare_regional_samples(nc_files)
 

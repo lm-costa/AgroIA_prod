@@ -60,3 +60,19 @@ def test_skip_pcse_forced_gc_is_scoped_and_restored():
     with skip_pcse_forced_gc(False):
         assert pcse.engine.gc is gc
     assert pcse.engine.gc is gc
+
+
+def test_worker_gc_skip_persists_after_python_gc():
+    # Regressao: um context manager sem referencia era coletado e desfazia o bypass.
+    import gc
+    import pcse.engine
+    from NLOPT_regional_soja_pr import _set_pcse_forced_gc_skipped
+
+    previous = _set_pcse_forced_gc_skipped(True)
+    try:
+        gc.collect()
+        assert pcse.engine.gc is not gc
+        assert pcse.engine.gc.collect() == 0
+    finally:
+        pcse.engine.gc = previous
+    assert pcse.engine.gc is gc
