@@ -116,10 +116,12 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             yield_sim = self.run_wofost_simulation(
                 model_params, sample['parameters'], sample['weather'], sample['agromanagement']
             )
-            if np.isnan(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD:
+            target = sample['dyield_target']
+            # np.isnan deixaria passar +/-inf (log1p/quadrado propagariam inf
+            # para o NLOPT); alvo nao finito e dado invalido, nao erro de ajuste.
+            if not np.isfinite(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD or not np.isfinite(target):
                 n_falhas += 1
                 continue
-            target = sample['dyield_target']
             log_squared_errors.append((np.log1p(yield_sim) - np.log1p(target)) ** 2)
             linear_squared_errors.append((yield_sim - target) ** 2)
 
