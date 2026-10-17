@@ -327,6 +327,29 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 optimization_stopped_early = True
                 break
 
+        if not optimized_params:
+            # Nenhuma etapa produziu parametros validos: salvar o grupo como se
+            # estivesse calibrado (params vazios = variedade padrao, RMSE inf)
+            # esconde a falha -- foi o que aconteceu no grupo 3.
+            print(f"\n❌ Grupo '{group_label}': nenhuma etapa convergiu -- calibracao FALHOU (nenhum parametro salvo).")
+            result = {
+                'group_label': group_label,
+                'n_municipios': len(nc_files),
+                'optimized_params': {},
+                'rmse_aggregated': None,
+                'yearly_metrics': None,
+                'n_stages': n_stages,
+                'stopped_early': False,
+                'execution_time': time.time() - start_time,
+                'n_samples': len(samples),
+                'calibration_failed': True,
+            }
+            self.save_group_results(result)
+            for sample in samples:
+                if os.path.exists(sample['agro_temp_file']):
+                    os.remove(sample['agro_temp_file'])
+            return result
+
         print("\n📈 Calculando metricas por municipio/ano com os parametros do grupo...")
         yearly_metrics = self._calculate_yearly_metrics(optimized_params, samples)
         yearly_metrics.insert(0, 'point_id', [s['point_id'] for s in samples])
@@ -367,21 +390,24 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         group_label = result['group_label']
         output_dir = self.paths['OPTIMIZATION']
         base_filename = f"OPT_REGIONAL_group{group_label}"
+        failed = bool(result.get('calibration_failed', False))
 
-        params_df = pd.DataFrame([result['optimized_params']])
-        params_df.insert(0, 'group_label', group_label)
-        params_df.insert(1, 'n_municipios', result['n_municipios'])
-        params_file = os.path.join(output_dir, f"{base_filename}_params.csv")
-        params_df.to_csv(params_file, index=False)
+        if not failed:
+            params_df = pd.DataFrame([result['optimized_params']])
+            params_df.insert(0, 'group_label', group_label)
+            params_df.insert(1, 'n_municipios', result['n_municipios'])
+            params_file = os.path.join(output_dir, f"{base_filename}_params.csv")
+            params_df.to_csv(params_file, index=False)
 
-        metrics_file = os.path.join(output_dir, f"{base_filename}_yearly_metrics.csv")
-        result['yearly_metrics'].to_csv(metrics_file, index=False)
+            metrics_file = os.path.join(output_dir, f"{base_filename}_yearly_metrics.csv")
+            result['yearly_metrics'].to_csv(metrics_file, index=False)
 
         summary = {
             'group_label': group_label,
             'n_municipios': result['n_municipios'],
             'n_samples': result['n_samples'],
-            'rmse_aggregated': float(result['rmse_aggregated']),
+            'calibration_failed': failed,
+            'rmse_aggregated': None if failed else float(result['rmse_aggregated']),
             'n_stages': result['n_stages'],
             'stopped_early': result['stopped_early'],
             'execution_time_seconds': result['execution_time'],
@@ -390,8 +416,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         with open(summary_file, 'w') as f:
             json.dump(summary, f, indent=2)
 
-        print(f"   💾 Parametros: {params_file}")
-        print(f"   💾 Metricas anuais: {metrics_file}")
+        if not failed:
+            print(f"   💾 Parametros: {params_file}")
+            print(f"   💾 Metricas anuais: {metrics_file}")
         print(f"   💾 Resumo: {summary_file}")
 
 
