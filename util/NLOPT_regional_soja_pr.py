@@ -65,6 +65,30 @@ MIN_PLAUSIBLE_YIELD = 300.0
 # municipio na validacao holdout).
 FAILURE_CEILING = 1e9
 
+# Estado de cada processo-trabalhador (ver _worker_init). Cada trabalhador
+# monta UMA vez as amostras (municipio x safra) do seu grupo de municipios e
+# as reutiliza em todas as avaliacoes do NLOPT -- so os parametros trafegam
+# entre processos, nunca os objetos do PCSE (nao serializaveis com seguranca).
+_WORKER = {}
+
+
+def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval):
+    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    loader = SoyNetCDFDataLoader(paths['COMPLETO'])
+    opt = optimizer_cls(paths, loader, {}, algorithm=algorithm, max_eval=max_eval)
+    _WORKER['opt'] = opt
+    _WORKER['samples'] = opt.prepare_regional_samples(nc_files)
+
+
+def _worker_eval(model_params):
+    """Simula todas as amostras do trabalhador; devolve {(point_id, safra): kg/ha}."""
+    opt = _WORKER['opt']
+    return {
+        (s['point_id'], s['year']): opt.run_wofost_simulation(
+            model_params, s['parameters'], s['weather'], s['agromanagement'])
+        for s in _WORKER['samples']
+    }
+
 
 class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
     """Calibracao regional (1 conjunto de parametros por cluster ou por estado inteiro)."""
@@ -88,6 +112,42 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 yd['point_id'] = point_info['point_id']
             samples.extend(years_data)
         return samples
+
+    def _simulate_samples(self, model_params, years_data):
+        """
+        Produtividade simulada (kg/ha) de cada amostra, na ordem de
+        `years_data`. Serial por padrao; com n_workers > 1 (ver
+        optimize_group) as amostras sao simuladas em processos separados,
+        com o mesmo resultado numerico -- cada amostra roda a mesma
+        sequencia de avaliacoes, so em outro processo.
+        """
+        workers = getattr(self, '_workers', None)
+        if not workers:
+            return [
+                self.run_wofost_simulation(model_params, s['parameters'], s['weather'], s['agromanagement'])
+                for s in years_data
+            ]
+        futures = [w.submit(_worker_eval, model_params) for w in workers]
+        table = {}
+        for fut in futures:
+            table.update(fut.result())
+        return [table.get((s['point_id'], s['year']), np.nan) for s in years_data]
+
+    def _start_workers(self, nc_files, n_workers):
+        from concurrent.futures import ProcessPoolExecutor
+        n_workers = max(1, min(n_workers, len(nc_files)))
+        shards = [nc_files[i::n_workers] for i in range(n_workers)]
+        self._workers = [
+            ProcessPoolExecutor(
+                max_workers=1, initializer=_worker_init,
+                initargs=(type(self), self.paths, shard, self.algorithm, self.max_eval))
+            for shard in shards
+        ]
+
+    def _stop_workers(self):
+        for w in getattr(self, '_workers', None) or []:
+            w.shutdown(wait=True, cancel_futures=True)
+        self._workers = None
 
     def objective_function_regional(self, X, grad, context):
         """
@@ -115,10 +175,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         linear_squared_errors = []
         n_falhas = 0
 
-        for sample in context['years_data']:
-            yield_sim = self.run_wofost_simulation(
-                model_params, sample['parameters'], sample['weather'], sample['agromanagement']
-            )
+        simulated = self._simulate_samples(model_params, context['years_data'])
+
+        for sample, yield_sim in zip(context['years_data'], simulated):
             target = sample['dyield_target']
             # np.isnan deixaria passar +/-inf (log1p/quadrado propagariam inf
             # para o NLOPT); alvo nao finito e dado invalido, nao erro de ajuste.
@@ -167,7 +226,20 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         return checkpoint
 
-    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True):
+    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True, n_workers=1):
+        """
+        Ver _optimize_group. n_workers > 1 simula as amostras de cada
+        avaliacao em paralelo (um processo por grupo de municipios); o
+        resultado numerico e o mesmo do modo serial (n_workers=1, padrao).
+        """
+        if n_workers and n_workers > 1:
+            self._start_workers(nc_files, n_workers)
+        try:
+            return self._optimize_group(nc_files, group_label, group_params, max_params_per_stage, resume)
+        finally:
+            self._stop_workers()
+
+    def _optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True):
         """
         Otimizacao hierarquica (mesmo esquema em etapas de
         optimize_point_multiyear), mas sobre a lista combinada de amostras
