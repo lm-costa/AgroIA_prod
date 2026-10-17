@@ -44,3 +44,19 @@ def test_parallel_objective_matches_serial():
 
     assert all(np.isfinite(v) and v < 1e9 for v, _ in serial)
     assert parallel == serial  # igualdade exata, nao aproximada
+
+
+def test_skip_pcse_forced_gc_is_scoped_and_restored():
+    import gc
+    import pcse.engine
+    from NLOPT_regional_soja_pr import skip_pcse_forced_gc
+
+    original = pcse.engine.gc
+    assert original is gc
+    with skip_pcse_forced_gc(True):
+        assert pcse.engine.gc is not gc
+        assert pcse.engine.gc.collect() == 0
+    assert pcse.engine.gc is gc
+    with skip_pcse_forced_gc(False):
+        assert pcse.engine.gc is gc
+    assert pcse.engine.gc is gc

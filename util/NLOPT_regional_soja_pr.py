@@ -65,6 +65,29 @@ MIN_PLAUSIBLE_YIELD = 300.0
 # municipio na validacao holdout).
 FAILURE_CEILING = 1e9
 
+import contextlib
+import types
+
+
+@contextlib.contextmanager
+def skip_pcse_forced_gc(enabled=True):
+    """
+    O PCSE chama gc.collect() ao fim de CADA simulacao (engine._finish_cropsimulation),
+    o que com milhares de simulacoes por avaliacao consome ~metade do tempo
+    (medido: 12.6 -> 6.7 s por avaliacao, resultados identicos, memoria estavel).
+    Dentro deste contexto essa chamada explicita e ignorada; o coletor
+    automatico do Python continua ativo normalmente.
+    """
+    import pcse.engine
+    original = pcse.engine.gc
+    if enabled:
+        pcse.engine.gc = types.SimpleNamespace(collect=lambda *a, **k: 0)
+    try:
+        yield
+    finally:
+        pcse.engine.gc = original
+
+
 # Estado de cada processo-trabalhador (ver _worker_init). Cada trabalhador
 # monta UMA vez as amostras (municipio x safra) do seu grupo de municipios e
 # as reutiliza em todas as avaliacoes do NLOPT -- so os parametros trafegam
@@ -72,10 +95,12 @@ FAILURE_CEILING = 1e9
 _WORKER = {}
 
 
-def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval):
+def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval, skip_gc=True):
     from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
     loader = SoyNetCDFDataLoader(paths['COMPLETO'])
     opt = optimizer_cls(paths, loader, {}, algorithm=algorithm, max_eval=max_eval)
+    if skip_gc:
+        skip_pcse_forced_gc(True).__enter__()  # vale pelo resto da vida do processo
     _WORKER['opt'] = opt
     _WORKER['samples'] = opt.prepare_regional_samples(nc_files)
 
@@ -136,11 +161,13 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
     def _start_workers(self, nc_files, n_workers):
         from concurrent.futures import ProcessPoolExecutor
         n_workers = max(1, min(n_workers, len(nc_files)))
+        skip_gc = getattr(self, '_skip_gc', True)
+        self._skip_gc = skip_gc
         shards = [nc_files[i::n_workers] for i in range(n_workers)]
         self._workers = [
             ProcessPoolExecutor(
                 max_workers=1, initializer=_worker_init,
-                initargs=(type(self), self.paths, shard, self.algorithm, self.max_eval))
+                initargs=(type(self), self.paths, shard, self.algorithm, self.max_eval, self._skip_gc))
             for shard in shards
         ]
 
@@ -226,16 +253,19 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         return checkpoint
 
-    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True, n_workers=1):
+    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True,
+                       n_workers=1, skip_gc=True):
         """
         Ver _optimize_group. n_workers > 1 simula as amostras de cada
         avaliacao em paralelo (um processo por grupo de municipios); o
         resultado numerico e o mesmo do modo serial (n_workers=1, padrao).
         """
+        self._skip_gc = skip_gc
         if n_workers and n_workers > 1:
             self._start_workers(nc_files, n_workers)
         try:
-            return self._optimize_group(nc_files, group_label, group_params, max_params_per_stage, resume)
+            with skip_pcse_forced_gc(skip_gc):
+                return self._optimize_group(nc_files, group_label, group_params, max_params_per_stage, resume)
         finally:
             self._stop_workers()
 
