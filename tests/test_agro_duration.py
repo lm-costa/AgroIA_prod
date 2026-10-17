@@ -17,12 +17,12 @@ def _calendar(path):
     return next(iter(data['AgroManagement'][0].values()))['CropCalendar']
 
 
-def test_default_duration_is_120(monkeypatch):
+def test_default_duration_is_140(monkeypatch):
     monkeypatch.delenv("SOJA_PR_MAX_DURATION", raising=False)
-    assert map_info_soja_pr()['max_duration'] == 120
+    assert map_info_soja_pr()['max_duration'] == 140
 
 
-@pytest.mark.parametrize("duration", [120, 140])
+@pytest.mark.parametrize("duration", [120, 140, 160])
 def test_agro_max_duration_follows_map_info(tmp_path, monkeypatch, duration):
     monkeypatch.setenv("SOJA_PR_MAX_DURATION", str(duration))
     agro = tmp_path / "a.agro"

@@ -82,11 +82,18 @@ def setup_paths_soja_pr():
     return paths
 
 
+# Teto do ciclo (dias). 120 truncava parte dos ciclos simulados com parametros
+# padrao em amostra do estado todo (~17% sem atingir maturacao, DVS<2); com 140
+# ~99% completam. No cluster 3.0 o teto nao pesou (piloto 120 vs 140 identico),
+# entao 140 e o valor mais seguro para os demais clusters.
+DEFAULT_MAX_DURATION_DAYS = 140
+
+
 def map_info_soja_pr():
     """
     Calendario agricola e solo de referencia para a soja no Parana.
 
-    Semeadura em novembro e duracao maxima de 120 dias -- e apenas um teto de
+    Semeadura em novembro e duracao maxima de 140 dias -- e apenas um teto de
     seguranca para o AgroManagement: a colheita real e determinada
     dinamicamente pelo WOFOST quando o estagio de desenvolvimento (DVS)
     atinge DVSEND, entao ciclos mais curtos terminam antes desse teto sem
@@ -101,11 +108,11 @@ def map_info_soja_pr():
     solo do PR), nao uma medicao local.
     """
     # SOJA_PR_MAX_DURATION permite testar outro teto de duracao sem editar o
-    # codigo (usado nos experimentos de calibracao); o padrao e 120 dias.
+    # codigo (usado nos experimentos de calibracao); o padrao e DEFAULT_MAX_DURATION_DAYS (140).
     return {
         'calendar': "Nov-Mar",
         'sowing_month': 11,
-        'max_duration': int(os.environ.get('SOJA_PR_MAX_DURATION', 120)),
+        'max_duration': int(os.environ.get('SOJA_PR_MAX_DURATION', DEFAULT_MAX_DURATION_DAYS)),
         'soil_file': 'ec4.soil',
     }
 
@@ -149,7 +156,7 @@ def update_agro_management_file_soja_pr(agro_path, start_date):
             crop_calendar['crop_end_date'] = crop_end_dt.date()
             # O PCSE encerra a cultura em max_duration dias (crop_end_type
             # 'maturity'), nao em crop_end_date. Sem isto o valor fixo do
-            # .agro (120) divergia do usado para montar a janela de clima.
+            # .agro divergia do usado para montar a janela de clima.
             crop_calendar['max_duration'] = duration_days
 
         new_campaign_definition = {crop_start_dt.date(): campaign_details}
