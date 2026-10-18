@@ -69,6 +69,71 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         model_params = WOFOSTMultiYearOptimizer.extract_model_params(X, param_names)
         return clamp_rdi_rdmcr(model_params)
 
+    # Joelhos (x, nome do parametro) de cada tabela calibravel -- mesma
+    # parametrizacao de NLOPT._configure_parameter_tables (milho).
+    TABLE_KNOTS = {
+        'SLATB': [(0.00, 'SLATB000'), (0.21, 'SLATB021'), (0.29, 'SLATB029'),
+                  (0.64, 'SLATB064'), (1.00, 'SLATB100'), (2.00, 'SLATB200')],
+        'AMAXTB': [(0.00, 'AMAXTB000'), (0.14, 'AMAXTB014'), (0.82, 'AMAXTB082'), (2.00, 'AMAXTB200')],
+        'TMPFTB': [(0.0, 'TMPFTB000'), (8.0, 'TMPFTB008'), (20.0, 'TMPFTB020'),
+                   (35.0, 'TMPFTB035'), (45.0, 'TMPFTB045')],
+        'RFSETB': [(0, 'RFSETB000'), (2, 'RFSETB200')],
+    }
+
+    @staticmethod
+    def _default_table(parameters, table):
+        """Tabela padrao da variedade como (xs, ys), ou None se indisponivel."""
+        try:
+            values = np.asarray(parameters._cropdata[table], dtype=float)
+        except (AttributeError, KeyError, TypeError, ValueError):
+            return None
+        return values[0::2], values[1::2]
+
+    def default_param_value(self, name, parameters):
+        """
+        Valor padrao da variedade para o parametro `name` (escalar ou joelho de
+        tabela, interpolado na tabela padrao), ou None se nao houver.
+        """
+        for table, knots in self.TABLE_KNOTS.items():
+            for x, key in knots:
+                if key == name:
+                    default = self._default_table(parameters, table)
+                    return None if default is None else float(np.interp(x, *default))
+        try:
+            value = parameters._cropdata[name]
+            value = float(value[0] if isinstance(value, (list, tuple)) else value)
+        except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+            return None
+        return value if np.isfinite(value) else None
+
+    def _configure_parameter_tables(self, model_params, parameters):
+        """
+        Como a versao do milho (NLOPT.py), mas sem descartar os pontos de tabela
+        nao calibrados: o base so envia ao override os joelhos presentes em
+        `model_params`, o que SUBSTITUI a tabela inteira da variedade por poucos
+        pontos (medido: AMAXTB so com {0.82, 2.0} reduz o TWSO padrao em ~58%).
+        Aqui cada tabela calibrada = tabela padrao + os joelhos calibrados
+        (inseridos; os pontos originais, ex. AMAXTB em DVS 1.7, sao mantidos),
+        entao uma tabela sem nenhum joelho calibrado, ou com joelhos iguais ao
+        padrao, reproduz exatamente a variedade.
+        """
+        knot_keys = {key for knots in self.TABLE_KNOTS.values() for _, key in knots}
+        for table, knots in self.TABLE_KNOTS.items():
+            calibrated = [(x, model_params[key]) for x, key in knots if key in model_params]
+            if not calibrated:
+                continue
+            default = self._default_table(parameters, table)
+            if default is None:
+                continue
+            xs0, ys0 = default
+            xs = sorted({round(float(x), 6) for x in xs0} | {round(float(x), 6) for x, _ in calibrated})
+            ys = [float(np.interp(x, xs0, ys0)) for x in xs]
+            for x, value in calibrated:
+                ys[xs.index(round(float(x), 6))] = float(value)
+            parameters.set_override(table, [v for pair in zip(xs, ys) for v in pair])
+        super()._configure_parameter_tables(
+            {k: v for k, v in model_params.items() if k not in knot_keys}, parameters)
+
     def run_wofost_simulation(self, model_params, parameters, weather, agromanagement):
         """
         Igual a WOFOSTOptimizer.run_wofost_simulation (util/NLOPT.py), exceto
