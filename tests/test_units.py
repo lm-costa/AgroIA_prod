@@ -82,3 +82,34 @@ def test_reference_simulation_is_agronomically_plausible():
                 os.remove(s['agro_temp_file'])
     assert all(np.isfinite(sims))
     assert all(1000 < v < 9000 for v in sims), sims
+
+
+@pytest.mark.skipif(not HAS_NC, reason="sem .nc de soja/PR")
+def test_calibration_target_is_raw_observed_yield_not_detrended():
+    """O alvo e a produtividade observada direta ('yield'), nao a sem tendencia ('dyield')."""
+    import pandas as pd
+    from utils_soja_pr import setup_paths_soja_pr, safra_ano_colheita
+    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
+
+    assert NLOPT_soja_pr.SoyWOFOSTMultiYearOptimizerPR.OBSERVED_YIELD_COLUMN == 'yield'
+    paths = setup_paths_soja_pr()
+    loader = SoyNetCDFDataLoader(paths['COMPLETO'])
+    opt = SoyWOFOSTRegionalOptimizerPR(paths, loader, {}, algorithm=0, max_eval=1)
+    nc = sorted(glob.glob(os.path.join(NC_DIR, "point_id_*.nc")))[0]
+    info, wdf = loader.load_point_data(nc)
+    samples = opt.prepare_multiyear_context(info, wdf, "pytest_target")
+    try:
+        assert samples
+        wdf = wdf.copy()
+        wdf['safra'] = pd.to_datetime(wdf['date']).apply(safra_ano_colheita)
+        raw = wdf.groupby('safra')['yield'].mean()
+        det = wdf.groupby('safra')['dyield'].mean()
+        for s in samples:
+            assert s['dyield_target'] == pytest.approx(to_dry_matter(raw[s['year']]))
+        # e a serie sem tendencia realmente difere em pelo menos uma safra
+        assert any(abs(raw[s['year']] - det[s['year']]) > 1.0 for s in samples)
+    finally:
+        for s in samples:
+            if os.path.exists(s['agro_temp_file']):
+                os.remove(s['agro_temp_file'])

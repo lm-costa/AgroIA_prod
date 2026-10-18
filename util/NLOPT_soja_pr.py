@@ -40,6 +40,15 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
     CROP_NAME = 'soybean'
     VARIETY_NAME = 'Soybean_VanHeemst_1988'
 
+    # Serie de produtividade observada usada como alvo da calibracao.
+    # 'yield' e a produtividade observada direta (IBGE/SIDRA, kg/ha), que
+    # preserva a variabilidade temporal real (clima, manejo, tecnologia).
+    # 'dyield' e a versao sem tendencia (detrending), pensada para estudo
+    # cientifico da resposta climatica e nao para calibrar um modelo que deve
+    # reproduzir a variabilidade entre safras. A chave de saida continua
+    # 'dyield_target' por compatibilidade com o restante do pipeline.
+    OBSERVED_YIELD_COLUMN = 'yield'
+
     # Quantas falhas de simulacao detalhar (params + traceback completo) antes
     # de voltar a so logar a mensagem de erro resumida. Diagnostico -- ver
     # docstring de run_wofost_simulation abaixo.
@@ -130,12 +139,13 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         weather_df = weather_df.sort_values('date').reset_index(drop=True)
         weather_df['ano_safra'] = weather_df['date'].apply(safra_ano_colheita)
 
-        safras_com_dyield = sorted(weather_df.loc[weather_df['dyield'].notna(), 'ano_safra'].unique())
+        col = self.OBSERVED_YIELD_COLUMN
+        safras_com_dyield = sorted(weather_df.loc[weather_df[col].notna(), 'ano_safra'].unique())
 
         years_data = []
 
         for safra in safras_com_dyield:
-            dyield_obs = weather_df.loc[weather_df['ano_safra'] == safra, 'dyield'].dropna()
+            dyield_obs = weather_df.loc[weather_df['ano_safra'] == safra, col].dropna()
 
             if len(dyield_obs) == 0:
                 continue
