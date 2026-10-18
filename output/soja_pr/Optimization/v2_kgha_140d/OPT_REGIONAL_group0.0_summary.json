@@ -1,0 +1,10 @@
+{
+  "group_label": 0.0,
+  "n_municipios": 50,
+  "n_samples": 443,
+  "calibration_failed": false,
+  "rmse_aggregated": 529.0011535167301,
+  "n_stages": 9,
+  "stopped_early": false,
+  "execution_time_seconds": 2150.687548160553
+}
