@@ -75,3 +75,33 @@ def test_failure_never_beats_a_valid_fit():
     good = _optimizer([2800.0] * 5).objective_function_regional([1.0], None, _context(targets))
     failed = _optimizer([np.nan] * 5).objective_function_regional([1.0], None, _context(targets))
     assert failed > good
+
+
+@pytest.mark.parametrize("sim", [500.0, 3000.0])
+def test_negative_target_never_makes_objective_nan(sim):
+    # Alvo negativo (artefato do detrending) tornaria log1p NaN e contaminaria o RMSE todo.
+    ctx = _context([2000.0, -40.6, 3000.0])
+    value = _optimizer([2000.0, sim, 3000.0]).objective_function_regional([1.0], None, ctx)
+    assert not np.isnan(value)
+
+
+def test_nonpositive_targets_are_dropped_at_sample_preparation(tmp_path):
+    opt = object.__new__(reg.SoyWOFOSTRegionalOptimizerPR)
+
+    class _Loader:
+        def load_point_data(self, nc_file):
+            return {'point_id': 'p1'}, None
+
+    opt.nc_loader = _Loader()
+    removed = []
+    years = []
+    for year, target in [(2020, 2000.0), (2021, -40.6), (2022, 0.0), (2023, 150.0)]:
+        f = tmp_path / f"agro_{year}.yaml"
+        f.write_text("x")
+        years.append({'year': year, 'dyield_target': target, 'agro_temp_file': str(f)})
+    opt.prepare_multiyear_context = lambda info, wdf, pid: years
+
+    samples = opt.prepare_regional_samples(['a.nc'])
+    assert [s['year'] for s in samples] == [2020, 2023]  # 150 kg/ha e quebra de safra real: fica
+    assert not (tmp_path / "agro_2021.yaml").exists() and not (tmp_path / "agro_2022.yaml").exists()
+    assert (tmp_path / "agro_2020.yaml").exists()

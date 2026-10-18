@@ -140,12 +140,25 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         vez por municipio, mas aqui chamamos varias vezes em sequencia).
         """
         samples = []
+        n_dropped = 0
         for nc_file in nc_files:
             point_info, weather_df = self.nc_loader.load_point_data(nc_file)
             years_data = self.prepare_multiyear_context(point_info, weather_df, point_info['point_id'])
+            # Produtividade <= 0 nao e fisica: e artefato do detrending (ex.:
+            # quebra de safra de 2022 em 4108320 -> -40.6 kg/ha apos remover a
+            # tendencia). Com alvo < -1, log1p devolve NaN e contamina o RMSE
+            # inteiro, empurrando o NLOPT para parametros que "matam" a lavoura.
+            # Quebras reais (> 0, ex. 150 kg/ha) continuam na calibracao.
             for yd in years_data:
-                yd['point_id'] = point_info['point_id']
-            samples.extend(years_data)
+                if np.isfinite(yd['dyield_target']) and yd['dyield_target'] > 0:
+                    yd['point_id'] = point_info['point_id']
+                    samples.append(yd)
+                else:
+                    n_dropped += 1
+                    if os.path.exists(yd['agro_temp_file']):
+                        os.remove(yd['agro_temp_file'])
+        if n_dropped:
+            print(f"   (descartadas {n_dropped} safras com produtividade-alvo <= 0 apos detrending)")
         return samples
 
     def _simulate_samples(self, model_params, years_data):
@@ -217,8 +230,11 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         for sample, yield_sim in zip(context['years_data'], simulated):
             target = sample['dyield_target']
             # np.isnan deixaria passar +/-inf (log1p/quadrado propagariam inf
-            # para o NLOPT); alvo nao finito e dado invalido, nao erro de ajuste.
-            if not np.isfinite(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD or not np.isfinite(target):
+            # para o NLOPT); alvo nao finito ou <= 0 e dado invalido (log1p de
+            # alvo < -1 e NaN), nao erro de ajuste. Os alvos <= 0 ja sao
+            # descartados em prepare_regional_samples; isto e a rede de seguranca.
+            if (not np.isfinite(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD
+                    or not np.isfinite(target) or target <= 0):
                 n_falhas += 1
                 continue
             log_squared_errors.append((np.log1p(yield_sim) - np.log1p(target)) ** 2)
