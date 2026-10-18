@@ -414,7 +414,11 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                     x0.append(optimized_params[p])
                 else:
                     lb, ub = bounds[p]
-                    x0.append((lb + ub) / 2)
+                    # Parte do valor padrao da variedade (modelo ja plausivel e
+                    # a etapa nunca comeca pior que a anterior); se nao houver
+                    # padrao ou ele estiver fora dos limites, ponto medio.
+                    default = self.default_param_value(p, samples[0]['parameters'])
+                    x0.append(default if default is not None and lb <= default <= ub else (lb + ub) / 2)
 
             stage_start = time.time()
             try:

@@ -100,3 +100,59 @@ def test_real_simulation_unchanged_when_knots_equal_default():
         for s in samples:
             if os.path.exists(s['agro_temp_file']):
                 os.remove(s['agro_temp_file'])
+
+
+def test_default_param_value_scalar_and_knot():
+    p = _FakeParams({'SPAN': [23.0], 'TDWI': 70.0, 'TMPFTB': TMPFTB_DEFAULT, 'AMAXTB': AMAXTB_DEFAULT})
+    opt = _bare()
+    assert opt.default_param_value('SPAN', p) == 23.0
+    assert opt.default_param_value('TDWI', p) == 70.0
+    assert opt.default_param_value('TMPFTB020', p) == pytest.approx(0.6 * 0 + np.interp(20, *_table(TMPFTB_DEFAULT)))
+    assert opt.default_param_value('AMAXTB200', p) == 0.0
+    assert opt.default_param_value('NAO_EXISTE', p) is None
+    assert opt.default_param_value('SPAN', None) is None
+
+
+# --- ponto inicial das etapas do otimizador regional ----------------------------------
+
+def _regional(tmp_path, sim, cropdata):
+    import nlopt
+    import NLOPT_regional_soja_pr as reg
+    opt = object.__new__(reg.SoyWOFOSTRegionalOptimizerPR)
+    opt.paths = {'OPTIMIZATION': str(tmp_path)}
+    opt.algorithm = nlopt.LN_BOBYQA
+    opt.max_eval = 30
+    prov = _FakeParams(cropdata)
+    targets = [1500.0, 2500.0, 3500.0, 4500.0, 2000.0]
+    opt.prepare_regional_samples = lambda nc: [
+        {'year': 2016 + i, 'point_id': f"p{i}", 'parameters': prov, 'weather': None,
+         'agromanagement': None, 'dyield_target': t, 'agro_temp_file': f"nao_existe_{i}.yaml"}
+        for i, t in enumerate(targets)]
+    opt.run_wofost_simulation = sim
+    return opt
+
+
+def test_stage_starts_at_variety_default_when_inside_bounds(tmp_path):
+    first = {}
+
+    def sim(model_params, *a, **k):
+        first.setdefault('x0', dict(model_params))
+        return 30.0 * model_params['TDWI']
+
+    opt = _regional(tmp_path, sim, {'TDWI': 70.0})
+    opt.optimize_group(['a.nc'], 6.0, ['TDWI'], max_params_per_stage=1, resume=False)
+    assert first['x0']['TDWI'] == 70.0  # padrao da variedade, nao o ponto medio dos limites
+
+
+def test_stage_falls_back_to_midpoint_without_default_or_outside_bounds(tmp_path):
+    from utils import WOFOST_bounds
+    seen = {}
+
+    def sim(model_params, *a, **k):
+        seen.setdefault(tuple(sorted(model_params)), dict(model_params))
+        return 30.0 * model_params['TDWI']
+
+    lo, hi = WOFOST_bounds(['TDWI'])['TDWI']
+    opt = _regional(tmp_path, sim, {'TDWI': hi * 10})  # padrao fora dos limites
+    opt.optimize_group(['a.nc'], 7.0, ['TDWI'], max_params_per_stage=1, resume=False)
+    assert seen[('TDWI',)]['TDWI'] == pytest.approx((lo + hi) / 2)
