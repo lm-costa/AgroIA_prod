@@ -168,7 +168,14 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
 
     def prepare_multiyear_context(self, point_info, weather_df, cluster_id):
         """
-        Monta o clima/agromanagement de cada safra com dyield valido.
+        Monta o clima/agromanagement de cada safra com produtividade valida.
+
+        O alvo de calibracao usa a produtividade COM tendencia (coluna
+        'yield' do NetCDF, publicada pelo IBGE) e nao a serie 'dyield'
+        (detrended, com a tendencia tecnologica removida e ancorada no ano
+        mais recente). A chave do dicionario continua 'dyield_target' por
+        compatibilidade com o resto do pipeline (NLOPT_regional_soja_pr.py
+        usa esse mesmo nome), mas o valor vem de 'yield'.
 
         IMPORTANTE: a janela de clima de cada safra e selecionada por
         INTERVALO DE DATAS real do ciclo (semeadura ate semeadura+duracao),

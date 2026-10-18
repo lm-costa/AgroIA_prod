@@ -138,6 +138,12 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         mesmo cluster/ano (prepare_multiyear_context nao inclui o point_id
         no nome do arquivo, so o cluster_id -- inofensivo quando chamado uma
         vez por municipio, mas aqui chamamos varias vezes em sequencia).
+
+        Amostras com alvo observado (dyield_target, ja em materia seca) <= 0 ou
+        nao finito sao descartadas aqui, antes da otimizacao: e artefato do
+        detrending (uma safra de quebra empurrada abaixo de zero) e faz
+        np.log1p(target) devolver NaN em objective_function_regional,
+        contaminando a media de erros. Quebras reais (> 0) permanecem.
         """
         samples = []
         n_dropped = 0
@@ -431,7 +437,12 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 # parcial rastreado em best_track e segue em frente.
                 print(f"   ⚠️  Etapa {stage}/{n_stages}: erro de arredondamento (busca estagnada) -- usando melhor resultado parcial.")
             except Exception as e:
-                print(f"   ❌ Erro na etapa {stage}: {e}")
+                # repr(e) (nao so {e}): algumas excecoes tem str() vazio e
+                # a mensagem "❌ Erro na etapa N: " sem nada depois nao da
+                # pra depurar. O traceback completo fica no log tambem.
+                print(f"   ❌ Erro na etapa {stage}: {e!r}")
+                import traceback
+                traceback.print_exc()
                 break
             stage_time = time.time() - stage_start
 
