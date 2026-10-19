@@ -65,6 +65,9 @@ class SoyMorrisScreeningAnalyzerPR(MorrisScreeningAnalyzer):
     CROP_NAME = 'soybean'
     VARIETY_NAME = 'Soybean_VanHeemst_1988'
 
+    # TWSO do PCSE ja esta em kg/ha, mesma unidade do IBGE/SIDRA 5457 (var. 112).
+    TWSO_TO_KG_HA = 1.0
+
     def extract_model_params(self, X):
         model_params = super().extract_model_params(X)
         return clamp_rdi_rdmcr(model_params)

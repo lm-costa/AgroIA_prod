@@ -1,9 +1,9 @@
 {
   "group_label": 2.0,
-  "n_municipios": 30,
-  "n_samples": 240,
-  "rmse_aggregated": 1904.1789331088435,
+  "n_municipios": 50,
+  "n_samples": 420,
+  "rmse_aggregated": 159809.1469811975,
   "n_stages": 9,
   "stopped_early": false,
-  "execution_time_seconds": 32852.682441711426
+  "execution_time_seconds": 7955.2935359478
 }

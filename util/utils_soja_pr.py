@@ -82,25 +82,38 @@ def setup_paths_soja_pr():
     return paths
 
 
+# Teto do ciclo (dias). 120 truncava parte dos ciclos simulados com parametros
+# padrao em amostra do estado todo (~17% sem atingir maturacao, DVS<2); com 140
+# ~99% completam. No cluster 3.0 o teto nao pesou (piloto 120 vs 140 identico),
+# entao 140 e o valor mais seguro para os demais clusters.
+DEFAULT_MAX_DURATION_DAYS = 140
+
+
 def map_info_soja_pr():
     """
     Calendario agricola e solo de referencia para a soja no Parana.
 
-    Semeadura em novembro e duracao maxima de 120 dias -- e apenas um teto de
+    Semeadura em novembro e duracao maxima de 140 dias -- e apenas um teto de
     seguranca para o AgroManagement: a colheita real e determinada
     dinamicamente pelo WOFOST quando o estagio de desenvolvimento (DVS)
     atinge DVSEND, entao ciclos mais curtos terminam antes desse teto sem
     problema.
 
-    O arquivo de solo 'ec3.soil' e o mesmo usado como padrao para o Brasil no
-    pipeline de milho (util.utils.map_info); mantido por consistencia -- vale
-    revisar/trocar por um perfil especifico dos solos do PR se disponivel.
+    O arquivo de solo e 'ec4.soil' (perfil EC4-fine, oficial WOFOST) em vez
+    do 'ec3.soil' generico usado no pipeline de milho: dos 4 perfis EC
+    padrao (EC2/EC3/EC4/EC6), EC4-fine e o numericamente mais proximo dos
+    valores medidos de Latossolo Vermelho distroferrico -- o solo dominante
+    na faixa produtora de soja do PR (derivado de basalto, muito argiloso).
+    E uma proxy (os perfis EC sao cenarios genericos, nao um levantamento de
+    solo do PR), nao uma medicao local.
     """
+    # SOJA_PR_MAX_DURATION permite testar outro teto de duracao sem editar o
+    # codigo (usado nos experimentos de calibracao); o padrao e DEFAULT_MAX_DURATION_DAYS (140).
     return {
         'calendar': "Nov-Mar",
         'sowing_month': 11,
-        'max_duration': 120,
-        'soil_file': 'ec3.soil',
+        'max_duration': int(os.environ.get('SOJA_PR_MAX_DURATION', DEFAULT_MAX_DURATION_DAYS)),
+        'soil_file': 'ec4.soil',
     }
 
 
@@ -141,12 +154,32 @@ def update_agro_management_file_soja_pr(agro_path, start_date):
             crop_calendar = campaign_details['CropCalendar']
             crop_calendar['crop_start_date'] = crop_start_dt.date()
             crop_calendar['crop_end_date'] = crop_end_dt.date()
+            # O PCSE encerra a cultura em max_duration dias (crop_end_type
+            # 'maturity'), nao em crop_end_date. Sem isto o valor fixo do
+            # .agro divergia do usado para montar a janela de clima.
+            crop_calendar['max_duration'] = duration_days
 
         new_campaign_definition = {crop_start_dt.date(): campaign_details}
         agro_data['AgroManagement'][0] = new_campaign_definition
 
     with open(agro_path, 'w') as f:
         yaml.dump(agro_data, f, default_flow_style=False, sort_keys=False)
+
+
+# Umidade-padrao de comercializacao da soja no Brasil (Instrucao Normativa
+# MAPA no 11/2018, classificacao de soja): 13% de umidade, base umida. O
+# rendimento do IBGE/LSPA (tabela 5457) e publicado nessa base, mas TWSO do
+# WOFOST e materia seca (0% de umidade) -- comparar os dois direto embute um
+# vies sistematico constante de ~13% no alvo de calibracao. `dyield`
+# permanece intocado (e o dado publicado, ja detrended); a conversao e
+# aplicada so no ponto de uso da calibracao, nunca sobrescrevendo o valor
+# original.
+SOYBEAN_MOISTURE_STANDARD = 0.13
+
+
+def to_dry_matter(yield_fresh_basis):
+    """Converte produtividade da base umida padrao (13%) para materia seca."""
+    return yield_fresh_basis * (1.0 - SOYBEAN_MOISTURE_STANDARD)
 
 
 def safra_ano_colheita(date):

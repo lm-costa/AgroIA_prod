@@ -1,1 +1,4 @@
 inputs/data/soja_pr/
+__pycache__/
+*.pyc
+inputs/data/agro/*_temp_*.yaml

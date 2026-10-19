@@ -29,6 +29,7 @@ from utils_soja_pr import (
     map_info_soja_pr,
     safe_elevation,
     safra_ano_colheita,
+    to_dry_matter,
     update_agro_management_file_soja_pr,
 )
 
@@ -38,6 +39,15 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
 
     CROP_NAME = 'soybean'
     VARIETY_NAME = 'Soybean_VanHeemst_1988'
+
+    # Serie de produtividade observada usada como alvo da calibracao.
+    # 'yield' e a produtividade observada direta (IBGE/SIDRA, kg/ha), que
+    # preserva a variabilidade temporal real (clima, manejo, tecnologia).
+    # 'dyield' e a versao sem tendencia (detrending), pensada para estudo
+    # cientifico da resposta climatica e nao para calibrar um modelo que deve
+    # reproduzir a variabilidade entre safras. A chave de saida continua
+    # 'dyield_target' por compatibilidade com o restante do pipeline.
+    OBSERVED_YIELD_COLUMN = 'yield'
 
     # Quantas falhas de simulacao detalhar (params + traceback completo) antes
     # de voltar a so logar a mensagem de erro resumida. Diagnostico -- ver
@@ -59,6 +69,71 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         model_params = WOFOSTMultiYearOptimizer.extract_model_params(X, param_names)
         return clamp_rdi_rdmcr(model_params)
 
+    # Joelhos (x, nome do parametro) de cada tabela calibravel -- mesma
+    # parametrizacao de NLOPT._configure_parameter_tables (milho).
+    TABLE_KNOTS = {
+        'SLATB': [(0.00, 'SLATB000'), (0.21, 'SLATB021'), (0.29, 'SLATB029'),
+                  (0.64, 'SLATB064'), (1.00, 'SLATB100'), (2.00, 'SLATB200')],
+        'AMAXTB': [(0.00, 'AMAXTB000'), (0.14, 'AMAXTB014'), (0.82, 'AMAXTB082'), (2.00, 'AMAXTB200')],
+        'TMPFTB': [(0.0, 'TMPFTB000'), (8.0, 'TMPFTB008'), (20.0, 'TMPFTB020'),
+                   (35.0, 'TMPFTB035'), (45.0, 'TMPFTB045')],
+        'RFSETB': [(0, 'RFSETB000'), (2, 'RFSETB200')],
+    }
+
+    @staticmethod
+    def _default_table(parameters, table):
+        """Tabela padrao da variedade como (xs, ys), ou None se indisponivel."""
+        try:
+            values = np.asarray(parameters._cropdata[table], dtype=float)
+        except (AttributeError, KeyError, TypeError, ValueError):
+            return None
+        return values[0::2], values[1::2]
+
+    def default_param_value(self, name, parameters):
+        """
+        Valor padrao da variedade para o parametro `name` (escalar ou joelho de
+        tabela, interpolado na tabela padrao), ou None se nao houver.
+        """
+        for table, knots in self.TABLE_KNOTS.items():
+            for x, key in knots:
+                if key == name:
+                    default = self._default_table(parameters, table)
+                    return None if default is None else float(np.interp(x, *default))
+        try:
+            value = parameters._cropdata[name]
+            value = float(value[0] if isinstance(value, (list, tuple)) else value)
+        except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+            return None
+        return value if np.isfinite(value) else None
+
+    def _configure_parameter_tables(self, model_params, parameters):
+        """
+        Como a versao do milho (NLOPT.py), mas sem descartar os pontos de tabela
+        nao calibrados: o base so envia ao override os joelhos presentes em
+        `model_params`, o que SUBSTITUI a tabela inteira da variedade por poucos
+        pontos (medido: AMAXTB so com {0.82, 2.0} reduz o TWSO padrao em ~58%).
+        Aqui cada tabela calibrada = tabela padrao + os joelhos calibrados
+        (inseridos; os pontos originais, ex. AMAXTB em DVS 1.7, sao mantidos),
+        entao uma tabela sem nenhum joelho calibrado, ou com joelhos iguais ao
+        padrao, reproduz exatamente a variedade.
+        """
+        knot_keys = {key for knots in self.TABLE_KNOTS.values() for _, key in knots}
+        for table, knots in self.TABLE_KNOTS.items():
+            calibrated = [(x, model_params[key]) for x, key in knots if key in model_params]
+            if not calibrated:
+                continue
+            default = self._default_table(parameters, table)
+            if default is None:
+                continue
+            xs0, ys0 = default
+            xs = sorted({round(float(x), 6) for x in xs0} | {round(float(x), 6) for x, _ in calibrated})
+            ys = [float(np.interp(x, xs0, ys0)) for x in xs]
+            for x, value in calibrated:
+                ys[xs.index(round(float(x), 6))] = float(value)
+            parameters.set_override(table, [v for pair in zip(xs, ys) for v in pair])
+        super()._configure_parameter_tables(
+            {k: v for k, v in model_params.items() if k not in knot_keys}, parameters)
+
     def run_wofost_simulation(self, model_params, parameters, weather, agromanagement):
         """
         Igual a WOFOSTOptimizer.run_wofost_simulation (util/NLOPT.py), exceto
@@ -76,7 +151,9 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
             output = wofost.get_output()
             if output:
                 final_output = output[-1]
-                return final_output.get('TWSO', 0) * 1000
+                # TWSO do PCSE ja esta em kg/ha (mesma unidade do IBGE/SIDRA
+                # 5457 var. 112); multiplicar por 1000 inflava a simulacao.
+                return final_output.get('TWSO', 0)
             return np.nan
 
         except Exception as e:
@@ -91,7 +168,14 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
 
     def prepare_multiyear_context(self, point_info, weather_df, cluster_id):
         """
-        Monta o clima/agromanagement de cada safra com dyield valido.
+        Monta o clima/agromanagement de cada safra com produtividade valida.
+
+        O alvo de calibracao usa a produtividade COM tendencia (coluna
+        'yield' do NetCDF, publicada pelo IBGE) e nao a serie 'dyield'
+        (detrended, com a tendencia tecnologica removida e ancorada no ano
+        mais recente). A chave do dicionario continua 'dyield_target' por
+        compatibilidade com o resto do pipeline (NLOPT_regional_soja_pr.py
+        usa esse mesmo nome), mas o valor vem de 'yield'.
 
         IMPORTANTE: a janela de clima de cada safra e selecionada por
         INTERVALO DE DATAS real do ciclo (semeadura ate semeadura+duracao),
@@ -127,12 +211,13 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         weather_df = weather_df.sort_values('date').reset_index(drop=True)
         weather_df['ano_safra'] = weather_df['date'].apply(safra_ano_colheita)
 
-        safras_com_dyield = sorted(weather_df.loc[weather_df['dyield'].notna(), 'ano_safra'].unique())
+        col = self.OBSERVED_YIELD_COLUMN
+        safras_com_dyield = sorted(weather_df.loc[weather_df[col].notna(), 'ano_safra'].unique())
 
         years_data = []
 
         for safra in safras_com_dyield:
-            dyield_obs = weather_df.loc[weather_df['ano_safra'] == safra, 'dyield'].dropna()
+            dyield_obs = weather_df.loc[weather_df['ano_safra'] == safra, col].dropna()
 
             if len(dyield_obs) == 0:
                 continue
@@ -164,7 +249,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
                 'weather': weather,
                 'agromanagement': agromanagement,
                 'parameters': parameters,
-                'dyield_target': np.mean(dyield_obs.values),
+                'dyield_target': to_dry_matter(np.mean(dyield_obs.values)),
                 'agro_temp_file': agro_path_temp
             })
 

@@ -30,7 +30,10 @@ from utils import WOFOST_bounds
 EARLY_STOPPING_RMSE_THRESHOLD = 100  # kg/ha -- mesmo criterio da calibracao por municipio
 XTOL_REL_EARLY_STAGES = 1e-5
 XTOL_REL_LATER_STAGES = 1e-4
-FTOL_ABS = 0.1
+# Tolerancia absoluta de f no NLOPT. O objetivo e o RMSE em log1p, que
+# aproxima o erro relativo medio (0.1 ~ 10%); o valor antigo (0.1) vinha da
+# escala kg/ha e fazia o NLOPT parar com ~600 kg/ha de erro. 1e-3 ~ 0,1%.
+FTOL_ABS = 1e-3
 EARLY_STAGE_THRESHOLD = 3
 
 # Fracao maxima de amostras (municipio x ano) que podem falhar em uma
@@ -50,6 +53,77 @@ FAILURE_TOLERANCE = 0.2
 # municipio de fora da amostra, independente do clima real daquele ano).
 MIN_PLAUSIBLE_YIELD = 300.0
 
+# Se uma etapa "convergir" com RMSE perto do teto de penalidade (1e10,
+# devolvido por objective_function_regional quando falhas demais acontecem),
+# isso NAO significa que o NLOPT achou um bom ajuste -- so significa que toda
+# a regiao testada nessa etapa falhou igual, e o 1e10 foi aceito como se
+# fosse um minimo valido (nenhuma excecao e lancada nesse caso, entao o
+# codigo aceitava esses parametros sem questionar). Qualquer RMSE acima
+# deste teto e tratado como etapa nao convergida -- essa e a causa raiz do
+# colapso observado no cluster 1.0 (parametros da etapa 8/9 travados no
+# 1e10 e aceitos, produzindo produtividade simulada ~0 para qualquer
+# municipio na validacao holdout).
+FAILURE_CEILING = 1e9
+
+import contextlib
+import types
+
+
+def _set_pcse_forced_gc_skipped(skipped):
+    """Liga/desliga o bypass do gc.collect() explicito do PCSE; devolve o modulo gc anterior."""
+    import gc
+    import pcse.engine
+    previous = pcse.engine.gc
+    pcse.engine.gc = types.SimpleNamespace(collect=lambda *a, **k: 0) if skipped else gc
+    return previous
+
+
+@contextlib.contextmanager
+def skip_pcse_forced_gc(enabled=True):
+    """
+    O PCSE chama gc.collect() ao fim de CADA simulacao (engine._finish_cropsimulation),
+    o que com milhares de simulacoes por avaliacao consome ~metade do tempo
+    (medido: 12.6 -> 6.7 s por avaliacao, resultados identicos, memoria estavel).
+    Dentro deste contexto essa chamada explicita e ignorada; o coletor
+    automatico do Python continua ativo normalmente.
+    """
+    if not enabled:
+        yield
+        return
+    previous = _set_pcse_forced_gc_skipped(True)
+    try:
+        yield
+    finally:
+        import pcse.engine
+        pcse.engine.gc = previous
+
+
+# Estado de cada processo-trabalhador (ver _worker_init). Cada trabalhador
+# monta UMA vez as amostras (municipio x safra) do seu grupo de municipios e
+# as reutiliza em todas as avaliacoes do NLOPT -- so os parametros trafegam
+# entre processos, nunca os objetos do PCSE (nao serializaveis com seguranca).
+_WORKER = {}
+
+
+def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval, skip_gc=True):
+    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    loader = SoyNetCDFDataLoader(paths['COMPLETO'])
+    opt = optimizer_cls(paths, loader, {}, algorithm=algorithm, max_eval=max_eval)
+    if skip_gc:
+        _set_pcse_forced_gc_skipped(True)  # vale pelo resto da vida do processo
+    _WORKER['opt'] = opt
+    _WORKER['samples'] = opt.prepare_regional_samples(nc_files)
+
+
+def _worker_eval(model_params):
+    """Simula todas as amostras do trabalhador; devolve {(point_id, safra): kg/ha}."""
+    opt = _WORKER['opt']
+    return {
+        (s['point_id'], s['year']): opt.run_wofost_simulation(
+            model_params, s['parameters'], s['weather'], s['agromanagement'])
+        for s in _WORKER['samples']
+    }
+
 
 class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
     """Calibracao regional (1 conjunto de parametros por cluster ou por estado inteiro)."""
@@ -64,42 +138,121 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         mesmo cluster/ano (prepare_multiyear_context nao inclui o point_id
         no nome do arquivo, so o cluster_id -- inofensivo quando chamado uma
         vez por municipio, mas aqui chamamos varias vezes em sequencia).
+
+        Amostras com alvo observado (dyield_target, ja em materia seca) <= 0 ou
+        nao finito sao descartadas aqui, antes da otimizacao: e artefato do
+        detrending (uma safra de quebra empurrada abaixo de zero) e faz
+        np.log1p(target) devolver NaN em objective_function_regional,
+        contaminando a media de erros. Quebras reais (> 0) permanecem.
         """
         samples = []
+        n_dropped = 0
         for nc_file in nc_files:
             point_info, weather_df = self.nc_loader.load_point_data(nc_file)
             years_data = self.prepare_multiyear_context(point_info, weather_df, point_info['point_id'])
+            # Produtividade <= 0 nao e fisica: e artefato do detrending (ex.:
+            # quebra de safra de 2022 em 4108320 -> -40.6 kg/ha apos remover a
+            # tendencia). Com alvo < -1, log1p devolve NaN e contamina o RMSE
+            # inteiro, empurrando o NLOPT para parametros que "matam" a lavoura.
+            # Quebras reais (> 0, ex. 150 kg/ha) continuam na calibracao.
             for yd in years_data:
-                yd['point_id'] = point_info['point_id']
-            samples.extend(years_data)
+                if np.isfinite(yd['dyield_target']) and yd['dyield_target'] > 0:
+                    yd['point_id'] = point_info['point_id']
+                    samples.append(yd)
+                else:
+                    n_dropped += 1
+                    if os.path.exists(yd['agro_temp_file']):
+                        os.remove(yd['agro_temp_file'])
+        if n_dropped:
+            print(f"   (descartadas {n_dropped} safras com produtividade-alvo <= 0 apos detrending)")
         return samples
+
+    def _simulate_samples(self, model_params, years_data):
+        """
+        Produtividade simulada (kg/ha) de cada amostra, na ordem de
+        `years_data`. Serial por padrao; com n_workers > 1 (ver
+        optimize_group) as amostras sao simuladas em processos separados,
+        com o mesmo resultado numerico -- cada amostra roda a mesma
+        sequencia de avaliacoes, so em outro processo.
+        """
+        workers = getattr(self, '_workers', None)
+        if not workers:
+            return [
+                self.run_wofost_simulation(model_params, s['parameters'], s['weather'], s['agromanagement'])
+                for s in years_data
+            ]
+        futures = [w.submit(_worker_eval, model_params) for w in workers]
+        table = {}
+        for fut in futures:
+            table.update(fut.result())
+        return [table.get((s['point_id'], s['year']), np.nan) for s in years_data]
+
+    def _start_workers(self, nc_files, n_workers):
+        from concurrent.futures import ProcessPoolExecutor
+        n_workers = max(1, min(n_workers, len(nc_files)))
+        skip_gc = getattr(self, '_skip_gc', True)
+        self._skip_gc = skip_gc
+        shards = [nc_files[i::n_workers] for i in range(n_workers)]
+        self._workers = [
+            ProcessPoolExecutor(
+                max_workers=1, initializer=_worker_init,
+                initargs=(type(self), self.paths, shard, self.algorithm, self.max_eval, self._skip_gc))
+            for shard in shards
+        ]
+
+    def _stop_workers(self):
+        for w in getattr(self, '_workers', None) or []:
+            w.shutdown(wait=True, cancel_futures=True)
+        self._workers = None
 
     def objective_function_regional(self, X, grad, context):
         """
         RMSE agregado sobre todas as amostras do grupo, tolerando ate
         FAILURE_TOLERANCE de falhas de simulacao (em vez de descartar a
         tentativa inteira, como objective_function_multiyear faz).
+
+        O valor MINIMIZADO pelo NLOPT e o RMSE em escala log1p (log(1+x)),
+        nao o RMSE linear em kg/ha: com centenas de amostras agregadas
+        (municipio x safra), o erro ao quadrado de um municipio/ano de alta
+        produtividade domina a soma, entao o otimizador tende a sacrificar o
+        ajuste dos municipios/anos de baixa produtividade so para acertar os
+        de alta. log1p equaliza o peso de erros proporcionais em vez de
+        absolutos (mesma pratica da fase 10.5 do pipeline de referencia
+        Doutorado-master). O RMSE linear (kg/ha, interpretavel) e calculado
+        em paralelo e devolvido via `context['last_linear_rmse']` -- um
+        efeito colateral deliberado (context e mutavel e compartilhado com
+        quem chamou), usado so para logging/early-stopping em optimize_group,
+        nunca para a otimizacao em si.
         """
         model_params = self.extract_model_params(X, context['param_names'])
         model_params.update(context.get('fixed_params', {}))
 
-        squared_errors = []
+        log_squared_errors = []
+        linear_squared_errors = []
         n_falhas = 0
 
-        for sample in context['years_data']:
-            yield_sim = self.run_wofost_simulation(
-                model_params, sample['parameters'], sample['weather'], sample['agromanagement']
-            )
-            if np.isnan(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD:
+        simulated = self._simulate_samples(model_params, context['years_data'])
+
+        for sample, yield_sim in zip(context['years_data'], simulated):
+            target = sample['dyield_target']
+            # np.isnan deixaria passar +/-inf (log1p/quadrado propagariam inf
+            # para o NLOPT); alvo nao finito ou <= 0 e dado invalido (log1p de
+            # alvo < -1 e NaN), nao erro de ajuste. Os alvos <= 0 ja sao
+            # descartados em prepare_regional_samples; isto e a rede de seguranca.
+            if (not np.isfinite(yield_sim) or yield_sim < MIN_PLAUSIBLE_YIELD
+                    or not np.isfinite(target) or target <= 0):
                 n_falhas += 1
                 continue
-            squared_errors.append((yield_sim - sample['dyield_target']) ** 2)
+            log_squared_errors.append((np.log1p(yield_sim) - np.log1p(target)) ** 2)
+            linear_squared_errors.append((yield_sim - target) ** 2)
 
         n_total = len(context['years_data'])
-        if n_total == 0 or len(squared_errors) == 0 or (n_falhas / n_total) > FAILURE_TOLERANCE:
+        if n_total == 0 or len(log_squared_errors) == 0 or (n_falhas / n_total) > FAILURE_TOLERANCE:
+            context['last_linear_rmse'] = None
             return 1e10
 
-        return np.sqrt(np.mean(squared_errors))
+        context['last_linear_rmse'] = float(np.sqrt(np.mean(linear_squared_errors)))
+        return float(np.sqrt(np.mean(log_squared_errors)))
 
     def _checkpoint_path(self, group_label):
         return os.path.join(self.paths['OPTIMIZATION'], f"OPT_REGIONAL_group{group_label}_checkpoint.json")
@@ -132,7 +285,23 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         return checkpoint
 
-    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True):
+    def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True,
+                       n_workers=1, skip_gc=True):
+        """
+        Ver _optimize_group. n_workers > 1 simula as amostras de cada
+        avaliacao em paralelo (um processo por grupo de municipios); o
+        resultado numerico e o mesmo do modo serial (n_workers=1, padrao).
+        """
+        self._skip_gc = skip_gc
+        if n_workers and n_workers > 1:
+            self._start_workers(nc_files, n_workers)
+        try:
+            with skip_pcse_forced_gc(skip_gc):
+                return self._optimize_group(nc_files, group_label, group_params, max_params_per_stage, resume)
+        finally:
+            self._stop_workers()
+
+    def _optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True):
         """
         Otimizacao hierarquica (mesmo esquema em etapas de
         optimize_point_multiyear), mas sobre a lista combinada de amostras
@@ -187,7 +356,17 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         for stage in range(start_stage, n_stages + 1):
             end_idx = min(stage * max_params_per_stage, len(group_params))
-            params_to_optimize = group_params[:end_idx]
+            # So os parametros ainda nao calibrados entram na busca. Os das
+            # etapas anteriores ja estao em optimized_params e sao fixados em
+            # context['fixed_params'] (que sobrescreve X): inclui-los no
+            # vetor de busca criava dimensoes mortas -- mudar X[i] nao alterava
+            # o objetivo -- e o BOBYQA gasta >= 2n+1 avaliacoes so para
+            # inicializar n dimensoes (etapa 9: 42 dimensoes para 5 efetivas).
+            # Parametros de uma etapa descartada (falha) voltam a ser
+            # tentados na etapa seguinte, como antes.
+            params_to_optimize = [p for p in group_params[:end_idx] if p not in optimized_params]
+            if not params_to_optimize:
+                continue
 
             bounds = WOFOST_bounds(params_to_optimize)
             stage_lower = [bounds[p][0] for p in params_to_optimize]
@@ -204,7 +383,31 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 'fixed_params': optimized_params.copy(),
             }
 
-            opt.set_min_objective(lambda X, grad: self.objective_function_regional(X, grad, context))
+            # Rastreia o melhor (x, RMSE) visto durante a etapa por fora do
+            # proprio NLOPT: quando opt.optimize() lanca RoundoffLimited, o
+            # NLOPT aborta sem devolver o x correspondente ao ultimo
+            # last_optimum_value(), entao sem esse rastreamento perderiamos o
+            # progresso da etapa inteira. Tambem e usado para decidir se a
+            # etapa bateu no FAILURE_CEILING (nenhuma avaliacao valida).
+            #
+            # 'rmse' e o valor MINIMIZADO pelo NLOPT (log1p, ver
+            # objective_function_regional) -- usado para achar o melhor
+            # ponto e para a comparacao com FAILURE_CEILING (o sentinela de
+            # falha, 1e10, e devolvido igual em qualquer escala). 'rmse_kg'
+            # e o RMSE linear (kg/ha) do MESMO ponto, capturado via
+            # context['last_linear_rmse'] -- usado so para early-stopping e
+            # logs legiveis, nunca para decidir qual ponto e o melhor.
+            best_track = {'x': None, 'rmse': float('inf'), 'rmse_kg': None}
+
+            def tracked_objective(X, grad, _context=context, _best=best_track):
+                rmse = self.objective_function_regional(X, grad, _context)
+                if rmse < _best['rmse']:
+                    _best['rmse'] = rmse
+                    _best['x'] = list(X)
+                    _best['rmse_kg'] = _context.get('last_linear_rmse')
+                return rmse
+
+            opt.set_min_objective(tracked_objective)
 
             max_eval_stage = max(1, self.max_eval // n_stages)
             opt.set_maxeval(max_eval_stage)
@@ -217,44 +420,88 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                     x0.append(optimized_params[p])
                 else:
                     lb, ub = bounds[p]
-                    x0.append((lb + ub) / 2)
+                    # Parte do valor padrao da variedade (modelo ja plausivel e
+                    # a etapa nunca comeca pior que a anterior); se nao houver
+                    # padrao ou ele estiver fora dos limites, ponto medio.
+                    default = self.default_param_value(p, samples[0]['parameters'])
+                    x0.append(default if default is not None and lb <= default <= ub else (lb + ub) / 2)
 
+            stage_start = time.time()
             try:
-                stage_start = time.time()
-                x_opt = opt.optimize(x0)
-                min_rmse = opt.last_optimum_value()
-                stage_time = time.time() - stage_start
-
-                for i, p in enumerate(params_to_optimize):
-                    optimized_params[p] = x_opt[i]
-
-                print(f"   ✅ Etapa {stage}/{n_stages}: RMSE regional = {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
-
-                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
-
-                if min_rmse < EARLY_STOPPING_RMSE_THRESHOLD:
-                    print(f"\n🎉 RMSE regional < {EARLY_STOPPING_RMSE_THRESHOLD} kg/ha! Interrompendo otimizacao.")
-                    optimization_stopped_early = True
-                    break
-
+                opt.optimize(x0)
             except nlopt.RoundoffLimited:
                 # Codigo -3 do NLOPT ("erro de arredondamento"): a busca
                 # estagnou por limite de precisao numerica nesta etapa, nao e
                 # uma falha real. Ao contrario de outras excecoes, nao
-                # abandona as etapas seguintes -- mantem os parametros novos
-                # desta etapa no palpite inicial (x0) e segue em frente, para
-                # nao perder a chance de calibrar o restante dos parametros.
-                stage_time = time.time() - stage_start
-                print(f"   ⚠️  Etapa {stage}/{n_stages}: erro de arredondamento (busca estagnada, {stage_time:.1f}s) -- mantendo x0 e seguindo.")
-                for i, p in enumerate(params_to_optimize):
-                    if p not in optimized_params:
-                        optimized_params[p] = x0[i]
-
-                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
-
+                # abandona as etapas seguintes -- usa o melhor resultado
+                # parcial rastreado em best_track e segue em frente.
+                print(f"   ⚠️  Etapa {stage}/{n_stages}: erro de arredondamento (busca estagnada) -- usando melhor resultado parcial.")
             except Exception as e:
-                print(f"   ❌ Erro na etapa {stage}: {e}")
+                # repr(e) (nao so {e}): algumas excecoes tem str() vazio e
+                # a mensagem "❌ Erro na etapa N: " sem nada depois nao da
+                # pra depurar. O traceback completo fica no log tambem.
+                print(f"   ❌ Erro na etapa {stage}: {e!r}")
+                import traceback
+                traceback.print_exc()
                 break
+            stage_time = time.time() - stage_start
+
+            stage_rmse = best_track['rmse']
+            stage_rmse_kg = best_track['rmse_kg']
+            stage_x = best_track['x']
+
+            # Nenhuma avaliacao valida na etapa (ou todas bateram o teto de
+            # falha objective_function_regional=1e10): NAO aceita esses
+            # parametros, mantem os da etapa anterior e avanca para a
+            # proxima etapa (mais parametros podem ajudar a escapar da
+            # regiao inviavel). Aceitar silenciosamente aqui e o bug que
+            # colapsou o cluster 1.0 -- ver FAILURE_CEILING acima. O
+            # sentinela de falha (1e10) e o mesmo independente da escala,
+            # entao a comparacao com FAILURE_CEILING continua valida com
+            # stage_rmse em log1p.
+            if stage_x is None or stage_rmse >= FAILURE_CEILING:
+                print(f"   ⚠️  Etapa {stage}/{n_stages}: nenhum resultado abaixo do teto de falha (RMSE log1p={stage_rmse:.2e}) -- descartando etapa, mantendo parametros anteriores ({stage_time:.1f}s).")
+                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
+                continue
+
+            for i, p in enumerate(params_to_optimize):
+                optimized_params[p] = stage_x[i]
+            # min_rmse (kg/ha) e o que orienta early-stopping e fica salvo
+            # como resultado do grupo -- interpretavel; a otimizacao em si
+            # foi guiada pelo RMSE log1p (stage_rmse).
+            min_rmse = stage_rmse_kg if stage_rmse_kg is not None else stage_rmse
+
+            print(f"   ✅ Etapa {stage}/{n_stages}: RMSE log1p = {stage_rmse:.4f} | RMSE regional ≈ {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
+
+            self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
+
+            if min_rmse < EARLY_STOPPING_RMSE_THRESHOLD:
+                print(f"\n🎉 RMSE regional < {EARLY_STOPPING_RMSE_THRESHOLD} kg/ha! Interrompendo otimizacao.")
+                optimization_stopped_early = True
+                break
+
+        if not optimized_params:
+            # Nenhuma etapa produziu parametros validos: salvar o grupo como se
+            # estivesse calibrado (params vazios = variedade padrao, RMSE inf)
+            # esconde a falha -- foi o que aconteceu no grupo 3.
+            print(f"\n❌ Grupo '{group_label}': nenhuma etapa convergiu -- calibracao FALHOU (nenhum parametro salvo).")
+            result = {
+                'group_label': group_label,
+                'n_municipios': len(nc_files),
+                'optimized_params': {},
+                'rmse_aggregated': None,
+                'yearly_metrics': None,
+                'n_stages': n_stages,
+                'stopped_early': False,
+                'execution_time': time.time() - start_time,
+                'n_samples': len(samples),
+                'calibration_failed': True,
+            }
+            self.save_group_results(result)
+            for sample in samples:
+                if os.path.exists(sample['agro_temp_file']):
+                    os.remove(sample['agro_temp_file'])
+            return result
 
         print("\n📈 Calculando metricas por municipio/ano com os parametros do grupo...")
         yearly_metrics = self._calculate_yearly_metrics(optimized_params, samples)
@@ -296,21 +543,24 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         group_label = result['group_label']
         output_dir = self.paths['OPTIMIZATION']
         base_filename = f"OPT_REGIONAL_group{group_label}"
+        failed = bool(result.get('calibration_failed', False))
 
-        params_df = pd.DataFrame([result['optimized_params']])
-        params_df.insert(0, 'group_label', group_label)
-        params_df.insert(1, 'n_municipios', result['n_municipios'])
-        params_file = os.path.join(output_dir, f"{base_filename}_params.csv")
-        params_df.to_csv(params_file, index=False)
+        if not failed:
+            params_df = pd.DataFrame([result['optimized_params']])
+            params_df.insert(0, 'group_label', group_label)
+            params_df.insert(1, 'n_municipios', result['n_municipios'])
+            params_file = os.path.join(output_dir, f"{base_filename}_params.csv")
+            params_df.to_csv(params_file, index=False)
 
-        metrics_file = os.path.join(output_dir, f"{base_filename}_yearly_metrics.csv")
-        result['yearly_metrics'].to_csv(metrics_file, index=False)
+            metrics_file = os.path.join(output_dir, f"{base_filename}_yearly_metrics.csv")
+            result['yearly_metrics'].to_csv(metrics_file, index=False)
 
         summary = {
             'group_label': group_label,
             'n_municipios': result['n_municipios'],
             'n_samples': result['n_samples'],
-            'rmse_aggregated': float(result['rmse_aggregated']),
+            'calibration_failed': failed,
+            'rmse_aggregated': None if failed else float(result['rmse_aggregated']),
             'n_stages': result['n_stages'],
             'stopped_early': result['stopped_early'],
             'execution_time_seconds': result['execution_time'],
@@ -319,8 +569,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         with open(summary_file, 'w') as f:
             json.dump(summary, f, indent=2)
 
-        print(f"   💾 Parametros: {params_file}")
-        print(f"   💾 Metricas anuais: {metrics_file}")
+        if not failed:
+            print(f"   💾 Parametros: {params_file}")
+            print(f"   💾 Metricas anuais: {metrics_file}")
         print(f"   💾 Resumo: {summary_file}")
 
 
