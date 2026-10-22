@@ -105,14 +105,15 @@ def skip_pcse_forced_gc(enabled=True):
 _WORKER = {}
 
 
-def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval, skip_gc=True):
+def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval, skip_gc=True, years=None):
     from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
     loader = SoyNetCDFDataLoader(paths['COMPLETO'])
     opt = optimizer_cls(paths, loader, {}, algorithm=algorithm, max_eval=max_eval)
     if skip_gc:
         _set_pcse_forced_gc_skipped(True)  # vale pelo resto da vida do processo
     _WORKER['opt'] = opt
-    _WORKER['samples'] = opt.prepare_regional_samples(nc_files)
+    _WORKER['samples'] = (opt.prepare_regional_samples(nc_files) if years is None
+                          else opt.prepare_regional_samples(nc_files, years=years))
 
 
 def _worker_eval(model_params):
@@ -128,7 +129,7 @@ def _worker_eval(model_params):
 class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
     """Calibracao regional (1 conjunto de parametros por cluster ou por estado inteiro)."""
 
-    def prepare_regional_samples(self, nc_files):
+    def prepare_regional_samples(self, nc_files, years=None):
         """
         Junta os anos de TODOS os municipios de `nc_files` em uma unica lista
         de amostras, reaproveitando prepare_multiyear_context por municipio.
@@ -144,6 +145,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         detrending (uma safra de quebra empurrada abaixo de zero) e faz
         np.log1p(target) devolver NaN em objective_function_regional,
         contaminando a media de erros. Quebras reais (> 0) permanecem.
+
+        `years` (opcional): so as safras listadas entram (validacao cruzada
+        temporal); None mantem todas.
         """
         samples = []
         n_dropped = 0
@@ -156,6 +160,10 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             # inteiro, empurrando o NLOPT para parametros que "matam" a lavoura.
             # Quebras reais (> 0, ex. 150 kg/ha) continuam na calibracao.
             for yd in years_data:
+                if years is not None and yd['year'] not in years:
+                    if os.path.exists(yd['agro_temp_file']):
+                        os.remove(yd['agro_temp_file'])
+                    continue
                 if np.isfinite(yd['dyield_target']) and yd['dyield_target'] > 0:
                     yd['point_id'] = point_info['point_id']
                     samples.append(yd)
@@ -196,7 +204,8 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         self._workers = [
             ProcessPoolExecutor(
                 max_workers=1, initializer=_worker_init,
-                initargs=(type(self), self.paths, shard, self.algorithm, self.max_eval, self._skip_gc))
+                initargs=(type(self), self.paths, shard, self.algorithm, self.max_eval, self._skip_gc,
+                          getattr(self, '_years', None)))
             for shard in shards
         ]
 
@@ -286,13 +295,14 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         return checkpoint
 
     def optimize_group(self, nc_files, group_label, group_params, max_params_per_stage=5, resume=True,
-                       n_workers=1, skip_gc=True):
+                       n_workers=1, skip_gc=True, years=None):
         """
         Ver _optimize_group. n_workers > 1 simula as amostras de cada
         avaliacao em paralelo (um processo por grupo de municipios); o
         resultado numerico e o mesmo do modo serial (n_workers=1, padrao).
         """
         self._skip_gc = skip_gc
+        self._years = None if years is None else set(years)
         if n_workers and n_workers > 1:
             self._start_workers(nc_files, n_workers)
         try:
@@ -322,7 +332,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         print(f"\n{'=' * 70}\n🌎 OTIMIZACAO REGIONAL -- Grupo '{group_label}' ({len(nc_files)} municipios)\n{'=' * 70}")
 
         print("📦 Preparando amostras de todos os municipios do grupo...")
-        samples = self.prepare_regional_samples(nc_files)
+        years = getattr(self, '_years', None)
+        samples = (self.prepare_regional_samples(nc_files) if years is None
+                   else self.prepare_regional_samples(nc_files, years=years))
 
         if len(samples) == 0:
             print("⚠️  Nenhuma amostra valida encontrada")
