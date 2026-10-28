@@ -111,7 +111,8 @@ def map_info_soja_pr():
     # codigo (usado nos experimentos de calibracao); o padrao e DEFAULT_MAX_DURATION_DAYS (140).
     return {
         'calendar': "Nov-Mar",
-        'sowing_month': 11,
+        'sowing_month': int(os.environ.get('SOJA_PR_SOWING_MONTH', 11)),
+        'sowing_day': int(os.environ.get('SOJA_PR_SOWING_DAY', 1)),
         'max_duration': int(os.environ.get('SOJA_PR_MAX_DURATION', DEFAULT_MAX_DURATION_DAYS)),
         'soil_file': 'ec4.soil',
     }
@@ -135,7 +136,7 @@ def update_agro_management_file_soja_pr(agro_path, start_date):
     else:
         crop_start_dt = start_date
 
-    crop_start_dt = crop_start_dt.replace(month=start_month, day=1)
+    crop_start_dt = crop_start_dt.replace(month=start_month, day=calendar_info['sowing_day'])
     crop_end_dt = crop_start_dt + timedelta(days=duration_days)
 
     with open(agro_path, 'r') as f:

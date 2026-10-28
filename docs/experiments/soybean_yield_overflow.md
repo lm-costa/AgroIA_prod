@@ -109,3 +109,50 @@ Scripts usados (em `docs/experiments/scripts/`, caminhos da máquina de origem):
 (executa as células do notebook 7.1 sem interface), `holdout_validation.py`,
 `compare_estado_cluster.py`, `scatter_comparacao.py`.
 Saídas versionadas em `output/soja_pr/Optimization/{v2_kgha_140d,v3_yield_tabelas,v3_estado,v3_estado100}/`.
+
+## 8. Validação cruzada: plantio e número de parâmetros calibrados
+
+Branch `exp/calibracao-soja-melhoria`. Um único modelo estadual (PR) calibrado em até 50 municípios
+(proporcionais por cluster), avaliado fora da amostra, com as **mesmas partições e semente (42)** em
+todas as rodadas, o que permite comparação pareada.
+
+- **Espacial:** 5 partições de municípios (estratificadas por cluster); treina nos demais, testa nos da partição, todas as safras.
+- **Temporal:** 3 blocos de safras (2016–18, 2019–21, 2022–24); treina nas outras safras, testa no bloco, nos mesmos municípios.
+- **Métricas:** RMSE, viés, r e r temporal (anomalias dentro do município). IC 95% da diferença por bootstrap de municípios.
+- Plantio em 1º de novembro, salvo indicação.
+
+| Rodada | Parâmetros | Plantio | Espacial: RMSE / r temp. | Temporal: RMSE / r temp. |
+|---|---|---|---|---|
+| base | 44 | 1 nov | 512 / 0,68 | 601 / 0,28 |
+| sow1015 | 44 | 15 out | 512 / 0,67 | 601 / 0,61 |
+| p15 | 15 | 1 nov | 515 / 0,66 | 556 / 0,51 |
+| p15_sow1015 | 15 | 15 out | 521 / 0,65 | 606 / 0,58 |
+| p10 | 10 | 1 nov | 521 / 0,64 | 565 / 0,55 |
+| p8 | 8 | 1 nov | 532 / 0,61 | 588 / 0,47 |
+
+O modelo padrão da variedade, sem calibração, tem RMSE ≈ 2400 e r temporal 0,67–0,71 nos mesmos dados.
+
+Resultados:
+
+- **Menos parâmetros ajudam em safras não vistas.** Com 15 parâmetros, o r temporal da validação temporal sobe 0,23 (IC [0,18; 0,28]) e o RMSE cai 44 kg/ha (IC [−67; −19]) em relação a 44 parâmetros. Com 10, o ganho de r temporal é 0,27 e o RMSE não difere de forma significativa; 10 e 15 não se distinguem.
+- **Custo espacial cresce com a redução.** RMSE espacial: 15 parâmetros +3 (n.s.), 10 parâmetros +9 (IC [+1; +17]), 8 parâmetros +20 (IC [+10; +29]). Com 8 parâmetros o ganho temporal também recua.
+- **Plantio em 15 de outubro** eleva o r temporal da validação temporal, sem mudar o RMSE, e aumenta o viés negativo (cluster 3: −439 kg/ha com 15 parâmetros). Na validação espacial é neutro a levemente pior.
+- **Cluster 2** segue sem habilidade temporal em todas as configurações (variabilidade interanual baixa).
+- Com 44 parâmetros, o modelo calibrado tem r temporal menor em safras não vistas (0,28) que o padrão da variedade (0,68): indício de sobreajuste a poucos anos.
+
+Limitações específicas:
+
+- Só 3 blocos temporais, com peso grande da seca de 2022; o bootstrap reamostra municípios, não safras.
+- Cada configuração foi rodada uma vez (variação entre sementes desconhecida); 15 parâmetros como ponto de equilíbrio é uma escolha, não um resultado testado (10 e 15 empatam no temporal).
+- Os parâmetros vêm do ranking de Morris calculado com a escala ×1000; assume-se que a ordem não muda.
+- Rodadas com 15 parâmetros e plantio em 15 de outubro e com 8/10 parâmetros foram feitas só em um plantio cada; não há 8/10 com 15 de outubro.
+
+Reprodução (variáveis em `scripts/cross_validation.py`):
+
+```bash
+CV_TAG=p15 CV_N_PARAMS=15 CV_MODE=both python -X utf8 docs/experiments/scripts/cross_validation.py
+CV_TAG=p15_sow1015 CV_N_PARAMS=15 SOJA_PR_SOWING_MONTH=10 SOJA_PR_SOWING_DAY=15 python -X utf8 docs/experiments/scripts/cross_validation.py
+python docs/experiments/scripts/compare_cv.py base p15 docs/experiments/cv_comparacoes/base_vs_p15.json
+```
+
+Saídas em `output/soja_pr/Optimization/cv_<tag>/` (só resumos, partições, previsões e `metrics.json` por partição versionados) e comparações em `docs/experiments/cv_comparacoes/`.

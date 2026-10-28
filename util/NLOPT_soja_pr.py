@@ -227,7 +227,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
             # convencao de safra_ano_colheita); senao, semeadura e colheita
             # caem no mesmo ano civil.
             ano_semeadura = safra - 1 if sowing_month >= 7 else safra
-            crop_start = pd.Timestamp(year=int(ano_semeadura), month=sowing_month, day=1)
+            crop_start = pd.Timestamp(year=int(ano_semeadura), month=sowing_month, day=calendar_info['sowing_day'])
             crop_end = crop_start + pd.Timedelta(days=duration_days)
 
             janela = weather_df[(weather_df['date'] >= crop_start) & (weather_df['date'] <= crop_end)]

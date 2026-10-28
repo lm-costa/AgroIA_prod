@@ -105,3 +105,23 @@ def test_nonpositive_targets_are_dropped_at_sample_preparation(tmp_path):
     assert [s['year'] for s in samples] == [2020, 2023]  # 150 kg/ha e quebra de safra real: fica
     assert not (tmp_path / "agro_2021.yaml").exists() and not (tmp_path / "agro_2022.yaml").exists()
     assert (tmp_path / "agro_2020.yaml").exists()
+
+
+def test_years_filter_keeps_only_requested_seasons(tmp_path):
+    opt = object.__new__(reg.SoyWOFOSTRegionalOptimizerPR)
+
+    class _Loader:
+        def load_point_data(self, nc_file):
+            return {'point_id': 'p1'}, None
+
+    opt.nc_loader = _Loader()
+    years = []
+    for year in (2018, 2019, 2020, 2021):
+        f = tmp_path / f"agro_{year}.yaml"
+        f.write_text("x")
+        years.append({'year': year, 'dyield_target': 2500.0, 'agro_temp_file': str(f)})
+    opt.prepare_multiyear_context = lambda info, wdf, pid: list(years)
+
+    assert [s['year'] for s in opt.prepare_regional_samples(['a.nc'])] == [2018, 2019, 2020, 2021]  # padrao: todas
+    assert [s['year'] for s in opt.prepare_regional_samples(['a.nc'], years={2019, 2021})] == [2019, 2021]
+    assert not (tmp_path / "agro_2018.yaml").exists() and (tmp_path / "agro_2019.yaml").exists()
