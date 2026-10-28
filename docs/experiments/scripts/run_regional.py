@@ -4,7 +4,7 @@ Usa o proprio codigo do notebook (fonte unica): celulas 1, 3, 5, 7, 9 e 10.
 Retomavel: checkpoints por etapa e resumos por grupo (ver optimize_group).
 """
 import json, os, sys, time
-ROOT = r"D:\_py\AgroIA_prod"
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 CELLS = [1, 3, 5, 7, 9, 10]

@@ -28,7 +28,7 @@ otimizador degenerava a lavoura, e um grupo salvo com parâmetros vazios e `rmse
 
 ## 3. Correções (commits)
 
-Cada uma com teste; suíte final: 45 testes.
+Cada uma com teste; suíte final: 58 testes (após a validação cruzada).
 
 1. `ec245ba` remove `× 1000` sobre `TWSO` (milho mantém o fator via `TWSO_TO_KG_HA`)
 2. `da10c4b` `inf` e alvo não finito contam como falha
@@ -97,17 +97,18 @@ Mais municípios (101 contra 49) não melhoraram; um conjunto único é equivale
 - Com o alvo bruto, a tendência de tecnologia entra no alvo e o modelo não a representa.
 - `dyield` e `yield`: a comparação v2 × v3 mistura duas mudanças (alvo e tabelas).
 - Notebooks 6, 7 e 8 **não** foram atualizados: 7 e 8 (por município) têm resultados calibrados com o erro do `× 1000`; o ranking do 6 (Morris) deve ser invariante à escala, mas não foi retestado.
-- Resultados antigos em `output/soja_pr/Optimization/OPT_REGIONAL_group*` continuam no repositório e são **inválidos** (calibrados com o `× 1000`).
+- Resultados antigos (calibrados com o `× 1000`) estão em `output/soja_pr/Optimization/_invalidos_x1000/` e são **inválidos**; os notebooks 7 e 8 têm aviso de desatualizados.
 
 ## 7. Reprodução
 
 ```bash
-python -m pytest tests -q          # 45 testes (alguns usam os .nc reais)
+python -m pytest tests -q          # 58 testes (alguns usam os .nc reais)
 ```
 
 Scripts usados (em `docs/experiments/scripts/`, caminhos da máquina de origem): `run_regional.py`
 (executa as células do notebook 7.1 sem interface), `holdout_validation.py`,
-`compare_estado_cluster.py`, `scatter_comparacao.py`.
+`compare_estado_cluster.py`, `scatter_comparacao.py`, `scatter_holdout.py`, `sowing_diag.py` (sensibilidade à data de plantio),
+`cross_validation.py` e `compare_cv.py` (seção 8). Os caminhos são derivados da localização do script.
 Saídas versionadas em `output/soja_pr/Optimization/{v2_kgha_140d,v3_yield_tabelas,v3_estado,v3_estado100}/`.
 
 ## 8. Validação cruzada: plantio e número de parâmetros calibrados

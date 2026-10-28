@@ -5,7 +5,7 @@ Holdout: todos os demais municipios do cluster, nunca vistos pelo otimizador.
 Compara parametros calibrados x parametros padrao da variedade.
 """
 import json, os, random, sys, time
-ROOT = r"D:\_py\AgroIA_prod"
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
 OUT = os.path.join(ROOT, "output", "soja_pr", "Optimization", os.environ.get("HOLDOUT_RUN", "v2_kgha_140d"))
 HOLD_DIR = os.environ.get("HOLDOUT_DIR", os.path.dirname(os.path.abspath(__file__)))
