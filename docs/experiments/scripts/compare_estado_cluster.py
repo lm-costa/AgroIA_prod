@@ -1,6 +1,6 @@
 """Compara estado(50), estado(100) e cluster em municipios fora de TODAS as amostras de calibracao."""
 import os, sys, json, random
-ROOT = r"D:\_py\AgroIA_prod"
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
 S = os.path.dirname(os.path.abspath(__file__))
 OPT = os.path.join(ROOT, "output", "soja_pr", "Optimization")

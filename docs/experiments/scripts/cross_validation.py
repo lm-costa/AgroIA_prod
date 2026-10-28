@@ -14,7 +14,7 @@ Variaveis: CV_TAG, CV_MODE, CV_K (5), CV_BLOCKS (3), CV_TRAIN_CAP (50), CV_SEED 
 CV_MAX_EVAL (1500), CV_N_PARAMS (44), CV_YEARS ("2016-2024"), CV_MAX_FOLDS (so para testes de fumaca).
 """
 import json, os, sys, time
-ROOT = r"D:\_py\AgroIA_prod"
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
 
 env = os.environ.get
