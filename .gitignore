@@ -2,3 +2,5 @@ inputs/data/soja_pr/
 __pycache__/
 *.pyc
 inputs/data/agro/*_temp_*.yaml
+# regenerados pelo pcse a cada execucao
+*.pkl
