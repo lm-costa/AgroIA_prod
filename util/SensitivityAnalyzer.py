@@ -277,10 +277,9 @@ class MorrisScreeningAnalyzer:
             pelo metodo de Morris para o modelo WOFOST usando dados NetCDF.
             """
 
-            # Fator aplicado ao TWSO simulado. 1000 e o comportamento historico
-            # do pipeline de milho (inalterado); o PCSE reporta TWSO em kg/ha,
-            # entao subclasses cujo alvo ja esta em kg/ha (soja/PR) usam 1.0.
-            TWSO_TO_KG_HA = 1000
+            # Fator aplicado ao TWSO simulado. O PCSE ja reporta TWSO em kg/ha,
+            # entao o fator e 1.0 (o 1000 antigo inflava a simulacao em 1000x).
+            TWSO_TO_KG_HA = 1.0
 
             def __init__(self, bounds, paths, nc_loader):
                 """

@@ -120,7 +120,8 @@ class WOFOSTOptimizer:
             output = wofost.get_output()
             if output:
                 final_output = output[-1]
-                yield_kg_ha = final_output.get('TWSO', 0) * 1000
+                # TWSO do PCSE ja e kg/ha (mesma unidade da produtividade observada)
+                yield_kg_ha = final_output.get('TWSO', 0)
                 return yield_kg_ha
             else:
                 return np.nan
