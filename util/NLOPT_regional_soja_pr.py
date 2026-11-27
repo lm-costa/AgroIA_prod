@@ -17,6 +17,7 @@ orquestracao da otimizacao e a funcao objetivo sao diferentes, porque:
    isso, o que travaria a otimizacao regional quase sempre);
 2) o resultado salvo e por GRUPO (cluster ou estado), nao por municipio.
 """
+import hashlib
 import json
 import os
 import time
@@ -26,6 +27,7 @@ import pandas as pd
 
 from NLOPT_soja_pr import SoyWOFOSTMultiYearOptimizerPR, EXCLUDED_PARAMS
 from utils import WOFOST_bounds
+from utils_soja_pr import map_info_soja_pr
 
 EARLY_STOPPING_RMSE_THRESHOLD = 100  # kg/ha -- mesmo criterio da calibracao por municipio
 XTOL_REL_EARLY_STAGES = 1e-5
@@ -112,8 +114,7 @@ def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval, skip_gc=Tr
     if skip_gc:
         _set_pcse_forced_gc_skipped(True)  # vale pelo resto da vida do processo
     _WORKER['opt'] = opt
-    _WORKER['samples'] = (opt.prepare_regional_samples(nc_files) if years is None
-                          else opt.prepare_regional_samples(nc_files, years=years))
+    _WORKER['samples'] = opt.prepare_regional_samples(nc_files, years=years)
 
 
 def _worker_eval(model_params):
@@ -263,10 +264,28 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         context['last_linear_rmse'] = float(np.sqrt(np.mean(linear_squared_errors)))
         return float(np.sqrt(np.mean(log_squared_errors)))
 
+    def config_signature(self, nc_files, years=None):
+        """
+        Hash curto de tudo o que determina o resultado de uma calibracao alem
+        dos parametros: municipios e safras de treino, calendario (plantio e
+        duracao), coluna-alvo, algoritmo e orcamento de avaliacoes. Gravado no
+        checkpoint: um checkpoint de outra configuracao nunca e retomado.
+        """
+        config = {
+            'files': sorted(os.path.basename(f) for f in nc_files),
+            'years': None if years is None else sorted(years),
+            'calendar': map_info_soja_pr(),
+            'target': self.OBSERVED_YIELD_COLUMN,
+            'algorithm': int(self.algorithm),
+            'max_eval': self.max_eval,
+        }
+        return hashlib.sha1(json.dumps(config, sort_keys=True, default=str).encode()).hexdigest()[:16]
+
     def _checkpoint_path(self, group_label):
         return os.path.join(self.paths['OPTIMIZATION'], f"OPT_REGIONAL_group{group_label}_checkpoint.json")
 
-    def _save_checkpoint(self, group_label, stage_completed, optimized_params, min_rmse, group_params, max_params_per_stage):
+    def _save_checkpoint(self, group_label, stage_completed, optimized_params, min_rmse, group_params, max_params_per_stage,
+                         signature=None):
         checkpoint = {
             'group_label': group_label,
             'stage_completed': stage_completed,
@@ -274,13 +293,14 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             'min_rmse': float(min_rmse),
             'group_params': group_params,
             'max_params_per_stage': max_params_per_stage,
+            'config_signature': signature,
         }
         tmp_path = self._checkpoint_path(group_label) + '.tmp'
         with open(tmp_path, 'w') as f:
             json.dump(checkpoint, f, indent=2)
         os.replace(tmp_path, self._checkpoint_path(group_label))
 
-    def _load_checkpoint(self, group_label, group_params, max_params_per_stage):
+    def _load_checkpoint(self, group_label, group_params, max_params_per_stage, signature=None):
         path = self._checkpoint_path(group_label)
         if not os.path.exists(path):
             return None
@@ -288,7 +308,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         with open(path) as f:
             checkpoint = json.load(f)
 
-        if checkpoint.get('group_params') != group_params or checkpoint.get('max_params_per_stage') != max_params_per_stage:
+        if (checkpoint.get('group_params') != group_params
+                or checkpoint.get('max_params_per_stage') != max_params_per_stage
+                or checkpoint.get('config_signature') != signature):
             print(f"   ⚠️  Checkpoint de '{group_label}' encontrado mas com parametros/config diferentes -- ignorando e recomecando do zero.")
             return None
 
@@ -333,8 +355,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         print("📦 Preparando amostras de todos os municipios do grupo...")
         years = getattr(self, '_years', None)
-        samples = (self.prepare_regional_samples(nc_files) if years is None
-                   else self.prepare_regional_samples(nc_files, years=years))
+        samples = self.prepare_regional_samples(nc_files, years=years)
 
         if len(samples) == 0:
             print("⚠️  Nenhuma amostra valida encontrada")
@@ -346,7 +367,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
         n_stages = max(1, (len(group_params) + max_params_per_stage - 1) // max_params_per_stage)
 
-        checkpoint = self._load_checkpoint(group_label, group_params, max_params_per_stage) if resume else None
+        signature = self.config_signature(nc_files, years)
+        checkpoint = (self._load_checkpoint(group_label, group_params, max_params_per_stage, signature)
+                      if resume else None)
 
         if checkpoint is not None:
             optimized_params = checkpoint['optimized_params']
@@ -359,6 +382,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             start_stage = 1
 
         optimization_stopped_early = False
+        stage_error = None
         stage = start_stage - 1
 
         if start_stage > n_stages:
@@ -455,6 +479,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 print(f"   ❌ Erro na etapa {stage}: {e!r}")
                 import traceback
                 traceback.print_exc()
+                stage_error = {'stage': stage, 'error': repr(e)}
                 break
             stage_time = time.time() - stage_start
 
@@ -473,7 +498,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             # stage_rmse em log1p.
             if stage_x is None or stage_rmse >= FAILURE_CEILING:
                 print(f"   ⚠️  Etapa {stage}/{n_stages}: nenhum resultado abaixo do teto de falha (RMSE log1p={stage_rmse:.2e}) -- descartando etapa, mantendo parametros anteriores ({stage_time:.1f}s).")
-                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
+                self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage, signature)
                 continue
 
             for i, p in enumerate(params_to_optimize):
@@ -485,7 +510,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
 
             print(f"   ✅ Etapa {stage}/{n_stages}: RMSE log1p = {stage_rmse:.4f} | RMSE regional ≈ {min_rmse:.2f} kg/ha ({stage_time:.1f}s)")
 
-            self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage)
+            self._save_checkpoint(group_label, stage, optimized_params, min_rmse, group_params, max_params_per_stage, signature)
 
             if min_rmse < EARLY_STOPPING_RMSE_THRESHOLD:
                 print(f"\n🎉 RMSE regional < {EARLY_STOPPING_RMSE_THRESHOLD} kg/ha! Interrompendo otimizacao.")
@@ -508,6 +533,8 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                 'execution_time': time.time() - start_time,
                 'n_samples': len(samples),
                 'calibration_failed': True,
+                'incomplete': stage_error is not None,
+                'stage_error': stage_error,
             }
             self.save_group_results(result)
             for sample in samples:
@@ -530,20 +557,26 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             'stopped_early': optimization_stopped_early,
             'execution_time': total_time,
             'n_samples': len(samples),
+            'incomplete': stage_error is not None,
+            'stage_error': stage_error,
         }
 
         self.save_group_results(result)
 
         # Resultado final consolidado e salvo -- o checkpoint intermediario
-        # nao e mais necessario.
+        # nao e mais necessario. Se uma etapa deu erro, o resultado e PARCIAL
+        # (marcado incomplete) e o checkpoint fica para retomar da etapa que falhou.
         checkpoint_path = self._checkpoint_path(group_label)
-        if os.path.exists(checkpoint_path):
+        if stage_error is None and os.path.exists(checkpoint_path):
             os.remove(checkpoint_path)
 
         for sample in samples:
             if os.path.exists(sample['agro_temp_file']):
                 os.remove(sample['agro_temp_file'])
 
+        if stage_error is not None:
+            print(f"\n⚠️  Grupo '{group_label}' INCOMPLETO: erro na etapa {stage_error['stage']} ({stage_error['error']}); "
+                  f"parametros das etapas anteriores salvos, checkpoint mantido para retomar.")
         status = "PERFEITO ✨" if optimization_stopped_early else "Completo"
         print(f"\n{'=' * 70}")
         print(f"🎉 Grupo '{group_label}' {status}! RMSE regional: {min_rmse:.2f} kg/ha | Tempo: {total_time:.1f}s")
@@ -572,6 +605,8 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
             'n_municipios': result['n_municipios'],
             'n_samples': result['n_samples'],
             'calibration_failed': failed,
+            'incomplete': bool(result.get('incomplete', False)),
+            'stage_error': result.get('stage_error'),
             'rmse_aggregated': None if failed else float(result['rmse_aggregated']),
             'n_stages': result['n_stages'],
             'stopped_early': result['stopped_early'],
