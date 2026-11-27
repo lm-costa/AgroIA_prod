@@ -5,14 +5,14 @@ import os
 import numpy as np
 import pytest
 
-import NLOPT_regional_soja_pr as reg
-import SensitivityAnalyzer
-from utils import WOFOST_bounds
+import util.NLOPT_regional_soja_pr as reg
+import util.SensitivityAnalyzer as SensitivityAnalyzer
+from util.utils import WOFOST_bounds
 
 
 def _sample(i, target=3000.0):
     return {'year': 2016 + i, 'point_id': f"p{i}", 'parameters': None, 'weather': None,
-            'agromanagement': None, 'dyield_target': target,
+            'agromanagement': None, 'target_yield': target,
             'agro_temp_file': f"nao_existe_{i}.yaml"}
 
 
@@ -26,7 +26,7 @@ def _optimizer(tmp_path, sim, max_eval=60, targets=None):
     opt.algorithm = nlopt.LN_BOBYQA
     opt.max_eval = max_eval
     targets = targets or [3000.0] * 5
-    opt.prepare_regional_samples = lambda nc_files: [_sample(i, t) for i, t in enumerate(targets)]
+    opt.prepare_regional_samples = lambda nc_files, years=None: [_sample(i, t) for i, t in enumerate(targets)]
     opt.run_wofost_simulation = sim
     return opt
 
@@ -86,9 +86,9 @@ def test_optimization_is_reproducible(tmp_path):
 
 
 def test_soja_sensitivity_analyzer_uses_kg_ha_directly():
-    import SensitivityAnalyzer_soja_pr as sa
+    import util.SensitivityAnalyzer_soja_pr as sa
     assert sa.SoyMorrisScreeningAnalyzerPR.TWSO_TO_KG_HA == 1.0
-    assert SensitivityAnalyzer.MorrisScreeningAnalyzer.TWSO_TO_KG_HA == 1000  # milho: inalterado
+    assert SensitivityAnalyzer.MorrisScreeningAnalyzer.TWSO_TO_KG_HA == 1.0  # PCSE ja reporta kg/ha (milho tambem)
 
 
 def _spy_dims(monkeypatch):
@@ -140,3 +140,67 @@ def test_params_of_discarded_stage_are_retried(tmp_path, monkeypatch):
     res = opt.optimize_group(['a.nc'], 5.0, ['TDWI', 'SPAN', 'TSUM1'], max_params_per_stage=1, resume=False)
     assert dims == [1, 1, 2]
     assert 'SPAN' not in res['optimized_params']
+
+
+def _raising_sim(model_params, *a, **k):
+    if 'SPAN' in model_params:
+        raise RuntimeError("falha simulada (ex.: processo trabalhador morreu)")
+    return _linear_sim(model_params)
+
+
+def test_error_in_a_stage_marks_result_incomplete_and_keeps_checkpoint(tmp_path):
+    opt = _optimizer(tmp_path, _raising_sim, targets=SPREAD_TARGETS)
+    res = opt.optimize_group(['a.nc'], 6.0, ['TDWI', 'SPAN'], max_params_per_stage=1, resume=True)
+    assert res['incomplete'] is True and res['stage_error']['stage'] == 2
+    assert set(res['optimized_params']) == {'TDWI'}  # etapa 1 aproveitada, mas marcada parcial
+    summary = json.loads((tmp_path / "OPT_REGIONAL_group6.0_summary.json").read_text())
+    assert summary['incomplete'] is True and summary['stage_error']['stage'] == 2
+    assert os.path.exists(tmp_path / "OPT_REGIONAL_group6.0_checkpoint.json")
+    # parcial nunca usa o nome dos arquivos validos (scripts leem esses CSVs direto)
+    assert os.path.exists(tmp_path / "OPT_REGIONAL_group6.0_params_partial.csv")
+    assert not os.path.exists(tmp_path / "OPT_REGIONAL_group6.0_params.csv")
+
+
+def test_incomplete_run_resumes_from_failed_stage_and_completes(tmp_path):
+    first = _optimizer(tmp_path, _raising_sim, targets=SPREAD_TARGETS)
+    first.optimize_group(['a.nc'], 7.0, ['TDWI', 'SPAN'], max_params_per_stage=1, resume=True)
+
+    seen = []
+
+    def sim(model_params, *a, **k):
+        seen.append(set(model_params))
+        return _linear_sim(model_params)
+
+    second = _optimizer(tmp_path, sim, targets=SPREAD_TARGETS)
+    res = second.optimize_group(['a.nc'], 7.0, ['TDWI', 'SPAN'], max_params_per_stage=1, resume=True)
+    assert res['incomplete'] is False and set(res['optimized_params']) == {'TDWI', 'SPAN'}
+    assert all('SPAN' in names for names in seen)  # etapa 1 nao foi refeita
+    assert not os.path.exists(tmp_path / "OPT_REGIONAL_group7.0_checkpoint.json")
+
+
+def test_checkpoint_of_another_configuration_is_not_resumed(tmp_path):
+    def interrupted(max_eval, years=None):
+        opt = _optimizer(tmp_path, _raising_sim, max_eval=max_eval, targets=SPREAD_TARGETS)
+        opt.optimize_group(['a.nc'], 8.0, ['TDWI', 'SPAN'], max_params_per_stage=1, resume=True, years=years)
+
+    interrupted(max_eval=60)
+    seen = []
+
+    def sim(model_params, *a, **k):
+        seen.append(set(model_params))
+        return _linear_sim(model_params)
+
+    # Outro orcamento de avaliacoes (outra configuracao): refaz desde a etapa 1.
+    other = _optimizer(tmp_path, sim, max_eval=80, targets=SPREAD_TARGETS)
+    other.optimize_group(['a.nc'], 8.0, ['TDWI', 'SPAN'], max_params_per_stage=1, resume=True)
+    assert {'TDWI'} in seen
+
+
+def test_config_signature_changes_with_files_years_calendar_and_budget(tmp_path, monkeypatch):
+    base = _optimizer(tmp_path, _linear_sim).config_signature(['a.nc', 'b.nc'], None)
+    assert base == _optimizer(tmp_path, _linear_sim).config_signature(['b.nc', 'a.nc'], None)  # ordem nao importa
+    assert base != _optimizer(tmp_path, _linear_sim).config_signature(['a.nc'], None)
+    assert base != _optimizer(tmp_path, _linear_sim).config_signature(['a.nc', 'b.nc'], {2016, 2017})
+    assert base != _optimizer(tmp_path, _linear_sim, max_eval=61).config_signature(['a.nc', 'b.nc'], None)
+    monkeypatch.setenv('SOJA_PR_SOWING_MONTH', '10')
+    assert base != _optimizer(tmp_path, _linear_sim).config_signature(['a.nc', 'b.nc'], None)

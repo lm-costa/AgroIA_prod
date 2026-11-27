@@ -6,7 +6,7 @@ import shutil
 import pytest
 import yaml
 
-from utils_soja_pr import map_info_soja_pr, update_agro_management_file_soja_pr
+from util.utils_soja_pr import map_info_soja_pr, update_agro_management_file_soja_pr
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AGRO = os.path.join(ROOT, "inputs", "data", "agro", "agro_soybean_pr.agro")

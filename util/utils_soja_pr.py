@@ -69,7 +69,8 @@ def setup_paths_soja_pr():
         'AGRO': os.path.join(agro_dir, 'agro_soybean_pr.agro'),
         'CROP': os.path.join(base_dir, "inputs", "data", 'crop'),
         'SOIL': os.path.join(base_dir, "inputs", "data", "soil", "ec4.soil"),
-        'WEATHER_RAW': r"D:\_py\Clima_AgroIA\data-raw\xavier-data",
+        # Dados brutos do BR-DWGD (fora do repositorio); AGROIA_WEATHER_RAW sobrescreve o padrao.
+        'WEATHER_RAW': os.environ.get('AGROIA_WEATHER_RAW', r"D:\_py\Clima_AgroIA\data-raw\xavier-data"),
         'RESULTS': os.path.join(base_dir, "output", "soja_pr", "Sensitivity Analysis"),
         'OPTIMIZATION': os.path.join(base_dir, "output", "soja_pr", "Optimization"),
     }

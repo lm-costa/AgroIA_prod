@@ -1,7 +1,7 @@
 """Compara estado(50), estado(100) e cluster em municipios fora de TODAS as amostras de calibracao."""
 import os, sys, json, random
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
+sys.path.insert(0, ROOT); os.chdir(ROOT)
 S = os.path.dirname(os.path.abspath(__file__))
 OPT = os.path.join(ROOT, "output", "soja_pr", "Optimization")
 
@@ -33,7 +33,7 @@ def main():
             fr = {k: [] for k in out}
             for f in files:
                 info, wdf = loader.load_point_data(f)
-                yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id']) if y['dyield_target'] > 0]
+                yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id']) if y['target_yield'] > 0]
                 for k, p in (("estado50", sets_state["estado50"]), ("estado100", sets_state["estado100"]), ("cluster", p_cl)):
                     m = opt._calculate_yearly_metrics(p, yd); m.insert(0, 'point_id', info['point_id']); m.insert(1, 'cluster', c); fr[k].append(m)
                 for y in yd:

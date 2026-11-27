@@ -12,8 +12,8 @@ from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 from pcse.models import Wofost72_WLP_FD
 
-from SensitivityAnalyzer import NetCDFDataLoader
-from utils import setup_paths, update_agro_management_file, map_info, WOFOST_bounds
+from util.SensitivityAnalyzer import NetCDFDataLoader
+from util.utils import setup_paths, update_agro_management_file, map_info, WOFOST_bounds
 
 
 class WOFOSTOptimizer:
@@ -55,7 +55,7 @@ class WOFOSTOptimizer:
 
     def create_weather_data_provider(self, weather_df, latitude, longitude, elevation=None):
         """Reutiliza o metodo do MorrisScreeningAnalyzer"""
-        from SensitivityAnalyzer import MorrisScreeningAnalyzer
+        from util.SensitivityAnalyzer import MorrisScreeningAnalyzer
 
         # Criar instância temporária apenas para usar o metodo
         temp_analyzer = MorrisScreeningAnalyzer({}, self.paths, self.nc_loader)
@@ -120,7 +120,8 @@ class WOFOSTOptimizer:
             output = wofost.get_output()
             if output:
                 final_output = output[-1]
-                yield_kg_ha = final_output.get('TWSO', 0) * 1000
+                # TWSO do PCSE ja e kg/ha (mesma unidade da produtividade observada)
+                yield_kg_ha = final_output.get('TWSO', 0)
                 return yield_kg_ha
             else:
                 return np.nan

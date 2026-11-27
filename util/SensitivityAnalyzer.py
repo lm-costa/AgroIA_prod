@@ -19,7 +19,7 @@ from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 from pcse.util import vap_from_relhum
 
 # Importando funções utilitárias
-from utils import WOFOST_bounds, setup_paths, update_agro_management_file
+from util.utils import WOFOST_bounds, setup_paths, update_agro_management_file
 
 # Define os limites (bounds) dos parâmetros a serem analisados.
 DEFAULT_BOUNDS = WOFOST_bounds("all")
@@ -277,10 +277,9 @@ class MorrisScreeningAnalyzer:
             pelo metodo de Morris para o modelo WOFOST usando dados NetCDF.
             """
 
-            # Fator aplicado ao TWSO simulado. 1000 e o comportamento historico
-            # do pipeline de milho (inalterado); o PCSE reporta TWSO em kg/ha,
-            # entao subclasses cujo alvo ja esta em kg/ha (soja/PR) usam 1.0.
-            TWSO_TO_KG_HA = 1000
+            # Fator aplicado ao TWSO simulado. O PCSE ja reporta TWSO em kg/ha,
+            # entao o fator e 1.0 (o 1000 antigo inflava a simulacao em 1000x).
+            TWSO_TO_KG_HA = 1.0
 
             def __init__(self, bounds, paths, nc_loader):
                 """
@@ -546,7 +545,7 @@ class MorrisScreeningAnalyzer:
                             start_date = pd.to_datetime(weather_df['date'].iloc[0])
 
                             # Obter informações do país do dataset
-                            from utils import map_info
+                            from util.utils import map_info
                             countries_info = map_info()
                             location = point_info.get('country', np.nan)  # Verificar nome correto do atributo
                             duration_days = countries_info.get(location, {}).get('max_duration', np.nan)

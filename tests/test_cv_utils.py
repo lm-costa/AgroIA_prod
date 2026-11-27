@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cv_utils_soja_pr import (make_spatial_folds, make_year_blocks, skill_metrics,
+from util.cv_utils_soja_pr import (make_spatial_folds, make_year_blocks, skill_metrics,
                               stratified_sample, summarize_folds)
 
 FILES = {0.0: [f"a{i}" for i in range(23)], 1.0: [f"b{i}" for i in range(9)], 2.0: [f"c{i}" for i in range(7)]}

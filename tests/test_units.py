@@ -6,8 +6,8 @@ import os
 import numpy as np
 import pytest
 
-import NLOPT_soja_pr
-from utils_soja_pr import to_dry_matter, SOYBEAN_MOISTURE_STANDARD
+import util.NLOPT_soja_pr as NLOPT_soja_pr
+from util.utils_soja_pr import to_dry_matter, SOYBEAN_MOISTURE_STANDARD
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NC_DIR = os.path.join(ROOT, "inputs", "data", "soja_pr", "completo")
@@ -62,9 +62,9 @@ def test_observed_yield_in_nc_is_kg_ha():
 @pytest.mark.skipif(not HAS_NC, reason="sem .nc de soja/PR")
 def test_reference_simulation_is_agronomically_plausible():
     """Variedade padrao + solo ec4 + clima real: TWSO deve ficar na faixa de soja (kg/ha)."""
-    from utils_soja_pr import setup_paths_soja_pr
-    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
-    from NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
+    from util.utils_soja_pr import setup_paths_soja_pr
+    from util.SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from util.NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
 
     paths = setup_paths_soja_pr()
     loader = SoyNetCDFDataLoader(paths['COMPLETO'])
@@ -88,9 +88,9 @@ def test_reference_simulation_is_agronomically_plausible():
 def test_calibration_target_is_raw_observed_yield_not_detrended():
     """O alvo e a produtividade observada direta ('yield'), nao a sem tendencia ('dyield')."""
     import pandas as pd
-    from utils_soja_pr import setup_paths_soja_pr, safra_ano_colheita
-    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
-    from NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
+    from util.utils_soja_pr import setup_paths_soja_pr, safra_ano_colheita
+    from util.SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from util.NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
 
     assert NLOPT_soja_pr.SoyWOFOSTMultiYearOptimizerPR.OBSERVED_YIELD_COLUMN == 'yield'
     paths = setup_paths_soja_pr()
@@ -106,10 +106,35 @@ def test_calibration_target_is_raw_observed_yield_not_detrended():
         raw = wdf.groupby('safra')['yield'].mean()
         det = wdf.groupby('safra')['dyield'].mean()
         for s in samples:
-            assert s['dyield_target'] == pytest.approx(to_dry_matter(raw[s['year']]))
+            assert s['target_yield'] == pytest.approx(to_dry_matter(raw[s['year']]))
         # e a serie sem tendencia realmente difere em pelo menos uma safra
         assert any(abs(raw[s['year']] - det[s['year']]) > 1.0 for s in samples)
     finally:
         for s in samples:
             if os.path.exists(s['agro_temp_file']):
                 os.remove(s['agro_temp_file'])
+
+
+@pytest.mark.skipif(not HAS_NC, reason="sem .nc de soja/PR")
+def test_temp_agro_files_differ_between_sowing_dates(monkeypatch):
+    """Rodadas com plantio diferente nao podem compartilhar o arquivo temporario do .agro."""
+    from util.utils_soja_pr import setup_paths_soja_pr
+    from util.SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from util.NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
+
+    paths = setup_paths_soja_pr()
+    loader = SoyNetCDFDataLoader(paths['COMPLETO'])
+    opt = SoyWOFOSTRegionalOptimizerPR(paths, loader, {0.0: []})
+    nc = sorted(glob.glob(os.path.join(NC_DIR, "point_id_*.nc")))[0]
+    info, wdf = loader.load_point_data(nc)
+    names = {}
+    for month, day in ((11, 1), (10, 15)):
+        monkeypatch.setenv("SOJA_PR_SOWING_MONTH", str(month))
+        monkeypatch.setenv("SOJA_PR_SOWING_DAY", str(day))
+        samples = opt.prepare_multiyear_context(info, wdf, "pytest_tmp")
+        names[(month, day)] = {s['year']: s['agro_temp_file'] for s in samples}
+        for s in samples:
+            if os.path.exists(s['agro_temp_file']):
+                os.remove(s['agro_temp_file'])
+    year = next(iter(names[(11, 1)]))
+    assert names[(11, 1)][year] != names[(10, 15)][year]

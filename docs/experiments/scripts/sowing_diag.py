@@ -1,7 +1,7 @@
 """Diagnostico: sensibilidade da habilidade temporal do modelo a data de plantio (sem recalibrar)."""
 import os, sys, random, json
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
+sys.path.insert(0, ROOT); os.chdir(ROOT)
 S = os.path.dirname(os.path.abspath(__file__))
 OPT = os.path.join(ROOT, "output", "soja_pr", "Optimization", "v3_yield_tabelas")
 DATES = [(10, 1), (10, 15), (11, 1), (11, 15), (12, 1)]
@@ -29,7 +29,7 @@ def main():
             for c, fl in files.items():
                 for f in fl:
                     info, wdf = loader.load_point_data(f)
-                    yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id']) if y['dyield_target'] > 0]
+                    yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id']) if y['target_yield'] > 0]
                     for tag, p in (("padrao", {}), ("v3_cluster", params[c])):
                         if not yd: continue
                         mt = opt._calculate_yearly_metrics(p, yd)

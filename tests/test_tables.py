@@ -5,8 +5,8 @@ import os
 import numpy as np
 import pytest
 
-import NLOPT_soja_pr
-from NLOPT_soja_pr import SoyWOFOSTMultiYearOptimizerPR as Soy
+import util.NLOPT_soja_pr as NLOPT_soja_pr
+from util.NLOPT_soja_pr import SoyWOFOSTMultiYearOptimizerPR as Soy
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NC_DIR = os.path.join(ROOT, "inputs", "data", "soja_pr", "completo")
@@ -74,9 +74,9 @@ def test_table_keys_are_not_forwarded_as_partial_tables():
 @pytest.mark.skipif(not HAS_NC, reason="sem .nc de soja/PR")
 def test_real_simulation_unchanged_when_knots_equal_default():
     import nlopt
-    from utils_soja_pr import setup_paths_soja_pr
-    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
-    from NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
+    from util.utils_soja_pr import setup_paths_soja_pr
+    from util.SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from util.NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
 
     paths = setup_paths_soja_pr()
     loader = SoyNetCDFDataLoader(paths['COMPLETO'])
@@ -117,16 +117,16 @@ def test_default_param_value_scalar_and_knot():
 
 def _regional(tmp_path, sim, cropdata):
     import nlopt
-    import NLOPT_regional_soja_pr as reg
+    import util.NLOPT_regional_soja_pr as reg
     opt = object.__new__(reg.SoyWOFOSTRegionalOptimizerPR)
     opt.paths = {'OPTIMIZATION': str(tmp_path)}
     opt.algorithm = nlopt.LN_BOBYQA
     opt.max_eval = 30
     prov = _FakeParams(cropdata)
     targets = [1500.0, 2500.0, 3500.0, 4500.0, 2000.0]
-    opt.prepare_regional_samples = lambda nc: [
+    opt.prepare_regional_samples = lambda nc, years=None: [
         {'year': 2016 + i, 'point_id': f"p{i}", 'parameters': prov, 'weather': None,
-         'agromanagement': None, 'dyield_target': t, 'agro_temp_file': f"nao_existe_{i}.yaml"}
+         'agromanagement': None, 'target_yield': t, 'agro_temp_file': f"nao_existe_{i}.yaml"}
         for i, t in enumerate(targets)]
     opt.run_wofost_simulation = sim
     return opt
@@ -145,7 +145,7 @@ def test_stage_starts_at_variety_default_when_inside_bounds(tmp_path):
 
 
 def test_stage_falls_back_to_midpoint_without_default_or_outside_bounds(tmp_path):
-    from utils import WOFOST_bounds
+    from util.utils import WOFOST_bounds
     seen = {}
 
     def sim(model_params, *a, **k):

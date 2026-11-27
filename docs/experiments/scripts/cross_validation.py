@@ -13,9 +13,9 @@ checkpoint por etapa. Saidas em output/soja_pr/Optimization/cv_<CV_TAG>/.
 Variaveis: CV_TAG, CV_MODE, CV_K (5), CV_BLOCKS (3), CV_TRAIN_CAP (50), CV_SEED (42), CV_WORKERS (8),
 CV_MAX_EVAL (1500), CV_N_PARAMS (44), CV_YEARS ("2016-2024"), CV_MAX_FOLDS (so para testes de fumaca).
 """
-import json, os, sys, time
+import hashlib, json, os, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
+sys.path.insert(0, ROOT); os.chdir(ROOT)
 
 env = os.environ.get
 TAG, MODE = env("CV_TAG", "base"), env("CV_MODE", "both")
@@ -50,16 +50,28 @@ def main():
     def run_fold(name, train_files, train_years, test_files, test_years):
         fold_dir = os.path.join(out_root, name)
         done = os.path.join(fold_dir, "metrics.json")
+        # Assinatura = treino (municipios, safras, calendario, alvo, algoritmo, orcamento) + teste.
+        # Uma particao so e reaproveitada se foi feita com a MESMA configuracao.
+        test_sig = json.dumps([sorted(os.path.basename(f) for f in test_files),
+                               None if test_years is None else sorted(test_years),
+                               list(group_params)])
+        signature = f"{opt.config_signature(train_files, train_years)}-{hashlib.sha1(test_sig.encode()).hexdigest()[:8]}"
         if os.path.exists(done):
-            print(f"[{name}] ja concluida, pulando", flush=True)
-            return json.load(open(done))
+            previous = json.load(open(done))
+            if previous.get('signature') is None:
+                print(f"[{name}] resultado anterior sem assinatura -- reaproveitando (a configuracao nao pode ser conferida)", flush=True)
+            if previous.get('signature') in (None, signature):
+                print(f"[{name}] ja concluida, pulando", flush=True)
+                return previous
+            print(f"[{name}] resultado existente e de outra configuracao -- refazendo", flush=True)
         os.makedirs(fold_dir, exist_ok=True)
         opt.paths['OPTIMIZATION'] = fold_dir
         t0 = time.time()
         res = opt.optimize_group(train_files, 'PR', group_params, n_workers=WORKERS, resume=True,
                                  years=train_years)
-        failed = res is None or res.get('calibration_failed', False)
-        record = {'fold': name, 'n_train_municipios': len(train_files),
+        # Calibracao com erro numa etapa (incomplete) e parcial: conta como falha.
+        failed = res is None or res.get('calibration_failed', False) or res.get('incomplete', False)
+        record = {'fold': name, 'signature': signature, 'n_train_municipios': len(train_files),
                   'train_years': sorted(train_years) if train_years else 'todas',
                   'test_years': sorted(test_years) if test_years else 'todas',
                   'n_test_municipios': len(test_files), 'calibration_failed': bool(failed),
@@ -71,7 +83,7 @@ def main():
                 for f in test_files:
                     info, wdf = loader.load_point_data(f)
                     yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id'])
-                          if y['dyield_target'] > 0 and (test_years is None or y['year'] in test_years)]
+                          if y['target_yield'] > 0 and (test_years is None or y['year'] in test_years)]
                     if not yd:
                         continue
                     m_cal = opt._calculate_yearly_metrics(params, yd)

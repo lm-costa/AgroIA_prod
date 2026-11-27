@@ -19,8 +19,8 @@ from pcse.input import CABOFileReader, YAMLAgroManagementReader
 from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 
-from SensitivityAnalyzer import MorrisScreeningAnalyzer, NetCDFDataLoader
-from utils_soja_pr import clamp_rdi_rdmcr, map_info_soja_pr, safe_elevation, update_agro_management_file_soja_pr
+from util.SensitivityAnalyzer import MorrisScreeningAnalyzer, NetCDFDataLoader
+from util.utils_soja_pr import clamp_rdi_rdmcr, map_info_soja_pr, safe_elevation, update_agro_management_file_soja_pr
 
 # Importações do SALib usadas apenas dentro do método sobrescrito
 from SALib.analyze import morris as morris_analyzer_salib

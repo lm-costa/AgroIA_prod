@@ -13,9 +13,9 @@ HAS_NC = len(glob.glob(os.path.join(NC_DIR, "point_id_*.nc"))) >= 3
 @pytest.mark.skipif(not HAS_NC, reason="sem .nc de soja/PR")
 def test_parallel_objective_matches_serial():
     import nlopt
-    from utils_soja_pr import setup_paths_soja_pr
-    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
-    from NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
+    from util.utils_soja_pr import setup_paths_soja_pr
+    from util.SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from util.NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
 
     paths = setup_paths_soja_pr()
     loader = SoyNetCDFDataLoader(paths['COMPLETO'])
@@ -49,7 +49,7 @@ def test_parallel_objective_matches_serial():
 def test_skip_pcse_forced_gc_is_scoped_and_restored():
     import gc
     import pcse.engine
-    from NLOPT_regional_soja_pr import skip_pcse_forced_gc
+    from util.NLOPT_regional_soja_pr import skip_pcse_forced_gc
 
     original = pcse.engine.gc
     assert original is gc
@@ -66,7 +66,7 @@ def test_worker_gc_skip_persists_after_python_gc():
     # Regressao: um context manager sem referencia era coletado e desfazia o bypass.
     import gc
     import pcse.engine
-    from NLOPT_regional_soja_pr import _set_pcse_forced_gc_skipped
+    from util.NLOPT_regional_soja_pr import _set_pcse_forced_gc_skipped
 
     previous = _set_pcse_forced_gc_skipped(True)
     try:
