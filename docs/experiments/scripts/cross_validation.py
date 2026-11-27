@@ -53,11 +53,14 @@ def main():
         # Assinatura = treino (municipios, safras, calendario, alvo, algoritmo, orcamento) + teste.
         # Uma particao so e reaproveitada se foi feita com a MESMA configuracao.
         test_sig = json.dumps([sorted(os.path.basename(f) for f in test_files),
-                               None if test_years is None else sorted(test_years)])
+                               None if test_years is None else sorted(test_years),
+                               list(group_params)])
         signature = f"{opt.config_signature(train_files, train_years)}-{hashlib.sha1(test_sig.encode()).hexdigest()[:8]}"
         if os.path.exists(done):
             previous = json.load(open(done))
-            if previous.get('signature') == signature:
+            if previous.get('signature') is None:
+                print(f"[{name}] resultado anterior sem assinatura -- reaproveitando (a configuracao nao pode ser conferida)", flush=True)
+            if previous.get('signature') in (None, signature):
                 print(f"[{name}] ja concluida, pulando", flush=True)
                 return previous
             print(f"[{name}] resultado existente e de outra configuracao -- refazendo", flush=True)

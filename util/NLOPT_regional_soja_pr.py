@@ -142,8 +142,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         vez por municipio, mas aqui chamamos varias vezes em sequencia).
 
         Amostras com alvo observado (target_yield, ja em materia seca) <= 0 ou
-        nao finito sao descartadas aqui, antes da otimizacao: e artefato do
-        detrending (uma safra de quebra empurrada abaixo de zero) e faz
+        nao finito sao descartadas aqui, antes da otimizacao: e dado invalido
+        (valor nao positivo na serie observada; com a coluna 'dyield' era um
+        artefato do detrending, uma quebra de safra empurrada abaixo de zero) e faz
         np.log1p(target) devolver NaN em objective_function_regional,
         contaminando a media de erros. Quebras reais (> 0) permanecem.
 
@@ -155,9 +156,9 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         for nc_file in nc_files:
             point_info, weather_df = self.nc_loader.load_point_data(nc_file)
             years_data = self.prepare_multiyear_context(point_info, weather_df, point_info['point_id'])
-            # Produtividade <= 0 nao e fisica: e artefato do detrending (ex.:
-            # quebra de safra de 2022 em 4108320 -> -40.6 kg/ha apos remover a
-            # tendencia). Com alvo < -1, log1p devolve NaN e contamina o RMSE
+            # Produtividade <= 0 nao e fisica: dado invalido da serie observada
+            # (com 'dyield', ex.: quebra de 2022 em 4108320 -> -40.6 kg/ha apos
+            # remover a tendencia). Com alvo < -1, log1p devolve NaN e contamina o RMSE
             # inteiro, empurrando o NLOPT para parametros que "matam" a lavoura.
             # Quebras reais (> 0, ex. 150 kg/ha) continuam na calibracao.
             for yd in years_data:
@@ -173,7 +174,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                     if os.path.exists(yd['agro_temp_file']):
                         os.remove(yd['agro_temp_file'])
         if n_dropped:
-            print(f"   (descartadas {n_dropped} safras com produtividade-alvo <= 0 apos detrending)")
+            print(f"   (descartadas {n_dropped} safras com produtividade-alvo <= 0 ou nao finita)")
         return samples
 
     def _simulate_samples(self, model_params, years_data):
@@ -589,15 +590,17 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         output_dir = self.paths['OPTIMIZATION']
         base_filename = f"OPT_REGIONAL_group{group_label}"
         failed = bool(result.get('calibration_failed', False))
+        # Resultado parcial (erro numa etapa) nunca usa o nome dos arquivos validos.
+        suffix = '_partial' if result.get('incomplete') else ''
 
         if not failed:
             params_df = pd.DataFrame([result['optimized_params']])
             params_df.insert(0, 'group_label', group_label)
             params_df.insert(1, 'n_municipios', result['n_municipios'])
-            params_file = os.path.join(output_dir, f"{base_filename}_params.csv")
+            params_file = os.path.join(output_dir, f"{base_filename}_params{suffix}.csv")
             params_df.to_csv(params_file, index=False)
 
-            metrics_file = os.path.join(output_dir, f"{base_filename}_yearly_metrics.csv")
+            metrics_file = os.path.join(output_dir, f"{base_filename}_yearly_metrics{suffix}.csv")
             result['yearly_metrics'].to_csv(metrics_file, index=False)
 
         summary = {

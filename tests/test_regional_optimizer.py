@@ -156,6 +156,9 @@ def test_error_in_a_stage_marks_result_incomplete_and_keeps_checkpoint(tmp_path)
     summary = json.loads((tmp_path / "OPT_REGIONAL_group6.0_summary.json").read_text())
     assert summary['incomplete'] is True and summary['stage_error']['stage'] == 2
     assert os.path.exists(tmp_path / "OPT_REGIONAL_group6.0_checkpoint.json")
+    # parcial nunca usa o nome dos arquivos validos (scripts leem esses CSVs direto)
+    assert os.path.exists(tmp_path / "OPT_REGIONAL_group6.0_params_partial.csv")
+    assert not os.path.exists(tmp_path / "OPT_REGIONAL_group6.0_params.csv")
 
 
 def test_incomplete_run_resumes_from_failed_stage_and_completes(tmp_path):
