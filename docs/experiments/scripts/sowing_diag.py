@@ -1,7 +1,7 @@
 """Diagnostico: sensibilidade da habilidade temporal do modelo a data de plantio (sem recalibrar)."""
 import os, sys, random, json
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
+sys.path.insert(0, ROOT); os.chdir(ROOT)
 S = os.path.dirname(os.path.abspath(__file__))
 OPT = os.path.join(ROOT, "output", "soja_pr", "Optimization", "v3_yield_tabelas")
 DATES = [(10, 1), (10, 15), (11, 1), (11, 15), (12, 1)]

@@ -23,8 +23,8 @@ from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 from pcse.models import Wofost72_WLP_FD
 
-from NLOPT_MultiYear import WOFOSTMultiYearOptimizer
-from utils_soja_pr import (
+from util.NLOPT_MultiYear import WOFOSTMultiYearOptimizer
+from util.utils_soja_pr import (
     clamp_rdi_rdmcr,
     map_info_soja_pr,
     safe_elevation,

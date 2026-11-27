@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-import NLOPT_regional_soja_pr as reg
+import util.NLOPT_regional_soja_pr as reg
 
 
 def _optimizer(sim_values):

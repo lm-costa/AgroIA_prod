@@ -11,9 +11,9 @@ from pcse.input import CABOFileReader, YAMLAgroManagementReader
 from pcse.input import YAMLCropDataProvider
 from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 
-from SensitivityAnalyzer import NetCDFDataLoader
-from NLOPT import WOFOSTOptimizer
-from utils import setup_paths, update_agro_management_file, map_info
+from util.SensitivityAnalyzer import NetCDFDataLoader
+from util.NLOPT import WOFOSTOptimizer
+from util.utils import setup_paths, update_agro_management_file, map_info
 
 
 # Constantes de configuração

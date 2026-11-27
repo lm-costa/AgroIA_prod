@@ -19,7 +19,7 @@ from pcse.input.sitedataproviders import WOFOST72SiteDataProvider
 from pcse.util import vap_from_relhum
 
 # Importando funções utilitárias
-from utils import WOFOST_bounds, setup_paths, update_agro_management_file
+from util.utils import WOFOST_bounds, setup_paths, update_agro_management_file
 
 # Define os limites (bounds) dos parâmetros a serem analisados.
 DEFAULT_BOUNDS = WOFOST_bounds("all")
@@ -546,7 +546,7 @@ class MorrisScreeningAnalyzer:
                             start_date = pd.to_datetime(weather_df['date'].iloc[0])
 
                             # Obter informações do país do dataset
-                            from utils import map_info
+                            from util.utils import map_info
                             countries_info = map_info()
                             location = point_info.get('country', np.nan)  # Verificar nome correto do atributo
                             duration_days = countries_info.get(location, {}).get('max_duration', np.nan)

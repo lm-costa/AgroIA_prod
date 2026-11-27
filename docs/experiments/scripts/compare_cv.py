@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, os.path.join(ROOT, "util"))
-from cv_utils_soja_pr import skill_metrics  # noqa: E402
+sys.path.insert(0, ROOT)
+from util.cv_utils_soja_pr import skill_metrics  # noqa: E402
 
 OPT = os.path.join(ROOT, "output", "soja_pr", "Optimization")
 N_BOOT = int(os.environ.get("CMP_BOOT", 300))

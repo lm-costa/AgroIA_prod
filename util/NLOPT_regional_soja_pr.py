@@ -25,9 +25,9 @@ import time
 import numpy as np
 import pandas as pd
 
-from NLOPT_soja_pr import SoyWOFOSTMultiYearOptimizerPR, EXCLUDED_PARAMS
-from utils import WOFOST_bounds
-from utils_soja_pr import map_info_soja_pr
+from util.NLOPT_soja_pr import SoyWOFOSTMultiYearOptimizerPR, EXCLUDED_PARAMS
+from util.utils import WOFOST_bounds
+from util.utils_soja_pr import map_info_soja_pr
 
 EARLY_STOPPING_RMSE_THRESHOLD = 100  # kg/ha -- mesmo criterio da calibracao por municipio
 XTOL_REL_EARLY_STAGES = 1e-5
@@ -108,7 +108,7 @@ _WORKER = {}
 
 
 def _worker_init(optimizer_cls, paths, nc_files, algorithm, max_eval, skip_gc=True, years=None):
-    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from util.SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
     loader = SoyNetCDFDataLoader(paths['COMPLETO'])
     opt = optimizer_cls(paths, loader, {}, algorithm=algorithm, max_eval=max_eval)
     if skip_gc:

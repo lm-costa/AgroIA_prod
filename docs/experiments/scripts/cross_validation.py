@@ -15,7 +15,7 @@ CV_MAX_EVAL (1500), CV_N_PARAMS (44), CV_YEARS ("2016-2024"), CV_MAX_FOLDS (so p
 """
 import hashlib, json, os, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "util")); os.chdir(ROOT)
+sys.path.insert(0, ROOT); os.chdir(ROOT)
 
 env = os.environ.get
 TAG, MODE = env("CV_TAG", "base"), env("CV_MODE", "both")

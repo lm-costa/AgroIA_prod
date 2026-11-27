@@ -5,9 +5,9 @@ import os
 import numpy as np
 import pytest
 
-import NLOPT_regional_soja_pr as reg
-import SensitivityAnalyzer
-from utils import WOFOST_bounds
+import util.NLOPT_regional_soja_pr as reg
+import util.SensitivityAnalyzer as SensitivityAnalyzer
+from util.utils import WOFOST_bounds
 
 
 def _sample(i, target=3000.0):
@@ -86,7 +86,7 @@ def test_optimization_is_reproducible(tmp_path):
 
 
 def test_soja_sensitivity_analyzer_uses_kg_ha_directly():
-    import SensitivityAnalyzer_soja_pr as sa
+    import util.SensitivityAnalyzer_soja_pr as sa
     assert sa.SoyMorrisScreeningAnalyzerPR.TWSO_TO_KG_HA == 1.0
     assert SensitivityAnalyzer.MorrisScreeningAnalyzer.TWSO_TO_KG_HA == 1000  # milho: inalterado
 
