@@ -28,7 +28,7 @@ otimizador degenerava a lavoura, e um grupo salvo com parâmetros vazios e `rmse
 
 ## 3. Correções (commits)
 
-Cada uma com teste; suíte final: 58 testes (após a validação cruzada).
+Cada uma com teste; suíte final: 63 testes (após a validação cruzada).
 
 1. `ec245ba` remove `× 1000` sobre `TWSO` (milho mantém o fator via `TWSO_TO_KG_HA`)
 2. `da10c4b` `inf` e alvo não finito contam como falha
@@ -102,7 +102,7 @@ Mais municípios (101 contra 49) não melhoraram; um conjunto único é equivale
 ## 7. Reprodução
 
 ```bash
-python -m pytest tests -q          # 58 testes (alguns usam os .nc reais)
+python -m pytest tests -q          # 63 testes (alguns usam os .nc reais)
 ```
 
 Scripts usados (em `docs/experiments/scripts/`, caminhos da máquina de origem): `run_regional.py`
