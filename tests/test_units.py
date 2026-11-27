@@ -106,7 +106,7 @@ def test_calibration_target_is_raw_observed_yield_not_detrended():
         raw = wdf.groupby('safra')['yield'].mean()
         det = wdf.groupby('safra')['dyield'].mean()
         for s in samples:
-            assert s['dyield_target'] == pytest.approx(to_dry_matter(raw[s['year']]))
+            assert s['target_yield'] == pytest.approx(to_dry_matter(raw[s['year']]))
         # e a serie sem tendencia realmente difere em pelo menos uma safra
         assert any(abs(raw[s['year']] - det[s['year']]) > 1.0 for s in samples)
     finally:

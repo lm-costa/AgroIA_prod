@@ -45,8 +45,9 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
     # preserva a variabilidade temporal real (clima, manejo, tecnologia).
     # 'dyield' e a versao sem tendencia (detrending), pensada para estudo
     # cientifico da resposta climatica e nao para calibrar um modelo que deve
-    # reproduzir a variabilidade entre safras. A chave de saida continua
-    # 'dyield_target' por compatibilidade com o restante do pipeline.
+    # reproduzir a variabilidade entre safras. O alvo de cada safra fica na
+    # chave 'target_yield' (kg/ha, materia seca). As colunas de saida das metricas
+    # mantem os nomes 'dyield_obs'/'dyield_sim' (formato dos CSVs ja gerados).
     OBSERVED_YIELD_COLUMN = 'yield'
 
     # Quantas falhas de simulacao detalhar (params + traceback completo) antes
@@ -173,9 +174,8 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
         O alvo de calibracao usa a produtividade COM tendencia (coluna
         'yield' do NetCDF, publicada pelo IBGE) e nao a serie 'dyield'
         (detrended, com a tendencia tecnologica removida e ancorada no ano
-        mais recente). A chave do dicionario continua 'dyield_target' por
-        compatibilidade com o resto do pipeline (NLOPT_regional_soja_pr.py
-        usa esse mesmo nome), mas o valor vem de 'yield'.
+        mais recente). O valor vem de 'yield' e fica na chave 'target_yield'
+        de cada safra (as colunas de metricas mantem o nome legado 'dyield_obs').
 
         IMPORTANTE: a janela de clima de cada safra e selecionada por
         INTERVALO DE DATAS real do ciclo (semeadura ate semeadura+duracao),
@@ -252,7 +252,7 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
                 'weather': weather,
                 'agromanagement': agromanagement,
                 'parameters': parameters,
-                'dyield_target': to_dry_matter(np.mean(dyield_obs.values)),
+                'target_yield': to_dry_matter(np.mean(dyield_obs.values)),
                 'agro_temp_file': agro_path_temp
             })
 

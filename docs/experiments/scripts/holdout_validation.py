@@ -57,7 +57,7 @@ def main():
             for f in hold:
                 info, wdf = loader.load_point_data(f)
                 yd = opt.prepare_multiyear_context(info, wdf, info['point_id'])
-                yd = [y for y in yd if np.isfinite(y['dyield_target']) and y['dyield_target'] > 0]
+                yd = [y for y in yd if np.isfinite(y['target_yield']) and y['target_yield'] > 0]
                 if yd:
                     for frames, p in ((frames_cal, params), (frames_def, {})):
                         m = opt._calculate_yearly_metrics(p, yd)

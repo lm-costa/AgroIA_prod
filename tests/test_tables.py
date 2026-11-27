@@ -126,7 +126,7 @@ def _regional(tmp_path, sim, cropdata):
     targets = [1500.0, 2500.0, 3500.0, 4500.0, 2000.0]
     opt.prepare_regional_samples = lambda nc, years=None: [
         {'year': 2016 + i, 'point_id': f"p{i}", 'parameters': prov, 'weather': None,
-         'agromanagement': None, 'dyield_target': t, 'agro_temp_file': f"nao_existe_{i}.yaml"}
+         'agromanagement': None, 'target_yield': t, 'agro_temp_file': f"nao_existe_{i}.yaml"}
         for i, t in enumerate(targets)]
     opt.run_wofost_simulation = sim
     return opt

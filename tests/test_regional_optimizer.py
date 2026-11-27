@@ -12,7 +12,7 @@ from util.utils import WOFOST_bounds
 
 def _sample(i, target=3000.0):
     return {'year': 2016 + i, 'point_id': f"p{i}", 'parameters': None, 'weather': None,
-            'agromanagement': None, 'dyield_target': target,
+            'agromanagement': None, 'target_yield': target,
             'agro_temp_file': f"nao_existe_{i}.yaml"}
 
 

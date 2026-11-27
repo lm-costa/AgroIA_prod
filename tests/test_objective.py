@@ -18,7 +18,7 @@ def _context(targets):
         'param_names': ['TDWI'],
         'fixed_params': {},
         'years_data': [
-            {'parameters': None, 'weather': None, 'agromanagement': None, 'dyield_target': t}
+            {'parameters': None, 'weather': None, 'agromanagement': None, 'target_yield': t}
             for t in targets
         ],
     }
@@ -98,7 +98,7 @@ def test_nonpositive_targets_are_dropped_at_sample_preparation(tmp_path):
     for year, target in [(2020, 2000.0), (2021, -40.6), (2022, 0.0), (2023, 150.0)]:
         f = tmp_path / f"agro_{year}.yaml"
         f.write_text("x")
-        years.append({'year': year, 'dyield_target': target, 'agro_temp_file': str(f)})
+        years.append({'year': year, 'target_yield': target, 'agro_temp_file': str(f)})
     opt.prepare_multiyear_context = lambda info, wdf, pid: years
 
     samples = opt.prepare_regional_samples(['a.nc'])
@@ -119,7 +119,7 @@ def test_years_filter_keeps_only_requested_seasons(tmp_path):
     for year in (2018, 2019, 2020, 2021):
         f = tmp_path / f"agro_{year}.yaml"
         f.write_text("x")
-        years.append({'year': year, 'dyield_target': 2500.0, 'agro_temp_file': str(f)})
+        years.append({'year': year, 'target_yield': 2500.0, 'agro_temp_file': str(f)})
     opt.prepare_multiyear_context = lambda info, wdf, pid: list(years)
 
     assert [s['year'] for s in opt.prepare_regional_samples(['a.nc'])] == [2018, 2019, 2020, 2021]  # padrao: todas

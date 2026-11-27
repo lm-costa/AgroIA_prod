@@ -71,7 +71,7 @@ class WOFOSTMultiYearOptimizer(WOFOSTOptimizer):
                         'weather': WeatherDataProvider,
                         'agromanagement': YAMLAgroManagementReader,
                         'parameters': ParameterProvider,
-                        'dyield_target': float,
+                        'target_yield': float,
                         'agro_temp_file': str
                     },
                     ...
@@ -123,7 +123,7 @@ class WOFOSTMultiYearOptimizer(WOFOSTOptimizer):
                 'weather': weather,
                 'agromanagement': agromanagement,
                 'parameters': parameters,
-                'dyield_target': np.mean(dyield_obs.values),
+                'target_yield': np.mean(dyield_obs.values),
                 'agro_temp_file': agro_path_temp
             })
         
@@ -173,7 +173,7 @@ class WOFOSTMultiYearOptimizer(WOFOSTOptimizer):
                 return 1e10  # Penalidade para simulações inválidas
             
             # Erro quadrático
-            error = (yield_sim - year_data['dyield_target']) ** 2
+            error = (yield_sim - year_data['target_yield']) ** 2
             squared_errors.append(error)
         
         # RMSE agregado
@@ -365,7 +365,7 @@ class WOFOSTMultiYearOptimizer(WOFOSTOptimizer):
                 year_data['agromanagement']
             )
             
-            dyield_obs = year_data['dyield_target']
+            dyield_obs = year_data['target_yield']
             error = yield_sim - dyield_obs if not np.isnan(yield_sim) else np.nan
             
             metrics_list.append({
@@ -771,7 +771,7 @@ class WOFOSTMultiYearOptimizer(WOFOSTOptimizer):
             )
             
             if not np.isnan(yield_sim):
-                error = (yield_sim - year_data['dyield_target']) ** 2
+                error = (yield_sim - year_data['target_yield']) ** 2
                 squared_errors.append(error)
         
         val_rmse = np.sqrt(np.mean(squared_errors)) if squared_errors else np.nan

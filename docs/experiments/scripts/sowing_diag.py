@@ -29,7 +29,7 @@ def main():
             for c, fl in files.items():
                 for f in fl:
                     info, wdf = loader.load_point_data(f)
-                    yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id']) if y['dyield_target'] > 0]
+                    yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id']) if y['target_yield'] > 0]
                     for tag, p in (("padrao", {}), ("v3_cluster", params[c])):
                         if not yd: continue
                         mt = opt._calculate_yearly_metrics(p, yd)

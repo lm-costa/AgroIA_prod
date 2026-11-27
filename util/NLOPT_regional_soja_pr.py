@@ -141,7 +141,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         no nome do arquivo, so o cluster_id -- inofensivo quando chamado uma
         vez por municipio, mas aqui chamamos varias vezes em sequencia).
 
-        Amostras com alvo observado (dyield_target, ja em materia seca) <= 0 ou
+        Amostras com alvo observado (target_yield, ja em materia seca) <= 0 ou
         nao finito sao descartadas aqui, antes da otimizacao: e artefato do
         detrending (uma safra de quebra empurrada abaixo de zero) e faz
         np.log1p(target) devolver NaN em objective_function_regional,
@@ -165,7 +165,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
                     if os.path.exists(yd['agro_temp_file']):
                         os.remove(yd['agro_temp_file'])
                     continue
-                if np.isfinite(yd['dyield_target']) and yd['dyield_target'] > 0:
+                if np.isfinite(yd['target_yield']) and yd['target_yield'] > 0:
                     yd['point_id'] = point_info['point_id']
                     samples.append(yd)
                 else:
@@ -244,7 +244,7 @@ class SoyWOFOSTRegionalOptimizerPR(SoyWOFOSTMultiYearOptimizerPR):
         simulated = self._simulate_samples(model_params, context['years_data'])
 
         for sample, yield_sim in zip(context['years_data'], simulated):
-            target = sample['dyield_target']
+            target = sample['target_yield']
             # np.isnan deixaria passar +/-inf (log1p/quadrado propagariam inf
             # para o NLOPT); alvo nao finito ou <= 0 e dado invalido (log1p de
             # alvo < -1 e NaN), nao erro de ajuste. Os alvos <= 0 ja sao

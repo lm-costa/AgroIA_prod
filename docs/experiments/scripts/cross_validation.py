@@ -80,7 +80,7 @@ def main():
                 for f in test_files:
                     info, wdf = loader.load_point_data(f)
                     yd = [y for y in opt.prepare_multiyear_context(info, wdf, info['point_id'])
-                          if y['dyield_target'] > 0 and (test_years is None or y['year'] in test_years)]
+                          if y['target_yield'] > 0 and (test_years is None or y['year'] in test_years)]
                     if not yd:
                         continue
                     m_cal = opt._calculate_yearly_metrics(params, yd)
