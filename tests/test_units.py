@@ -113,3 +113,28 @@ def test_calibration_target_is_raw_observed_yield_not_detrended():
         for s in samples:
             if os.path.exists(s['agro_temp_file']):
                 os.remove(s['agro_temp_file'])
+
+
+@pytest.mark.skipif(not HAS_NC, reason="sem .nc de soja/PR")
+def test_temp_agro_files_differ_between_sowing_dates(monkeypatch):
+    """Rodadas com plantio diferente nao podem compartilhar o arquivo temporario do .agro."""
+    from utils_soja_pr import setup_paths_soja_pr
+    from SensitivityAnalyzer_soja_pr import SoyNetCDFDataLoader
+    from NLOPT_regional_soja_pr import SoyWOFOSTRegionalOptimizerPR
+
+    paths = setup_paths_soja_pr()
+    loader = SoyNetCDFDataLoader(paths['COMPLETO'])
+    opt = SoyWOFOSTRegionalOptimizerPR(paths, loader, {0.0: []})
+    nc = sorted(glob.glob(os.path.join(NC_DIR, "point_id_*.nc")))[0]
+    info, wdf = loader.load_point_data(nc)
+    names = {}
+    for month, day in ((11, 1), (10, 15)):
+        monkeypatch.setenv("SOJA_PR_SOWING_MONTH", str(month))
+        monkeypatch.setenv("SOJA_PR_SOWING_DAY", str(day))
+        samples = opt.prepare_multiyear_context(info, wdf, "pytest_tmp")
+        names[(month, day)] = {s['year']: s['agro_temp_file'] for s in samples}
+        for s in samples:
+            if os.path.exists(s['agro_temp_file']):
+                os.remove(s['agro_temp_file'])
+    year = next(iter(names[(11, 1)]))
+    assert names[(11, 1)][year] != names[(10, 15)][year]

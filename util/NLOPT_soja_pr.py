@@ -237,7 +237,10 @@ class SoyWOFOSTMultiYearOptimizerPR(WOFOSTMultiYearOptimizer):
 
             weather = self.create_weather_data_provider(janela, LAT, LON, elevation)
 
-            agro_path_temp = f"{self.paths['AGRO']}_temp_{cluster_id}_{safra}.yaml"
+            # Calendario no nome: duas rodadas simultaneas com plantio/duracao
+            # diferentes nunca escrevem o mesmo arquivo (conteudo igual => mesmo nome).
+            agro_path_temp = (f"{self.paths['AGRO']}_temp_{cluster_id}_{safra}_"
+                              f"{sowing_month:02d}{calendar_info['sowing_day']:02d}_{duration_days}d.yaml")
             shutil.copy(self.paths['AGRO'], agro_path_temp)
             update_agro_management_file_soja_pr(agro_path_temp, crop_start)
             agromanagement = YAMLAgroManagementReader(agro_path_temp)
